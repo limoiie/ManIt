@@ -10,6 +10,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.limoiie.cppman.services.MyApplicationService"/>
         <projectService serviceImplementation="com.github.limoiie.cppman.services.MyProjectService"/>
+        <toolWindow id="Cpp Man" secondary="true" icon="AllIcons.General.Modified" anchor="right"
+                    factoryClass="com.github.limoiie.cppman.toolwindows.CppManToolWindowFactory" />
     </extensions>
 
     <applicationListeners>
