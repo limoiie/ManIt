@@ -18,21 +18,34 @@ class MyApplicationService {
         println(MyBundle.message("applicationService"))
     }
 
-    fun man(qualifiedNames: String) {
+    /**
+     * Invoke [man] on [word] and show the result in tool window
+     */
+    fun man(word: String, man: String = "cppman") {
         if (preJob?.isCancelled == true) {
             preJob?.cancel()
         }
         preJob = GlobalScope.launch {
             withTimeoutOrNull(10_000) {
                 if (!isActive) return@withTimeoutOrNull
-                page = "cppman $qualifiedNames".runCommand()
-                logger.debug {
-                    page?: "Failed to run cppman"
-                }
+                page = "$man $word".runCommand()
+                logger.debug { page?: "Failed to run $man" }
+
                 if (!isActive) return@withTimeoutOrNull
                 ApplicationManager.getApplication().invokeLater {
-                    CppManToolWindowFactory.cppManToolWindow?.updateUi(page)
+                    CppManToolWindowFactory.cppManToolWindow?.updateUi(word, page)
                 }
+            }
+        }
+    }
+
+    fun loadManCandidateWords(man: String = "cppman", onLoaded: (Collection<String>) -> Unit) {
+        GlobalScope.launch {
+            val list = "$man -f std::".runCommand()
+            val candidates = list?.splitToSequence('\n')
+                ?.map { it.split('-').first().trim() }
+            if (candidates != null) {
+                onLoaded(candidates.toList())
             }
         }
     }

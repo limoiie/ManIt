@@ -16,7 +16,7 @@ class CppManToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         logger.info("createToolWindowContent")
 
-        cppManToolWindow = CppManToolWindow(toolWindow)
+        cppManToolWindow = CppManToolWindow(project, toolWindow)
         val contentFactory = ContentFactory.SERVICE.getInstance()
         val content = contentFactory.createContent(cppManToolWindow!!.getContent(), "", false)
         toolWindow.contentManager.addContent(content)

@@ -25,7 +25,7 @@ class CppManAction : AnAction() {
             val qualifiedName = getQualifiedName(psiElem)
             if (qualifiedName != null) {
                 logger.info("Qualified Name: $qualifiedName")
-                service<MyApplicationService>().man(qualifiedName)
+                service<MyApplicationService>().man(qualifiedName, "cppman")
             }
         }
     }
