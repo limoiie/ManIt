@@ -16,4 +16,14 @@
         <listener class="com.github.limoiie.cppman.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+
+    <actions>
+        <action id="com.github.limoiie.cppman.actions.CppManAction"
+                class="com.github.limoiie.cppman.actions.CppManAction" text="Man Cpp"
+                description="Man cppreference page and show in quick documentation view">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt M"/>
+        </action>
+    </actions>
+
 </idea-plugin>
