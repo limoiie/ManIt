@@ -19,7 +19,7 @@ class MyApplicationService {
     }
 
     /**
-     * Invoke [man] on [word] and show the result in tool window
+     * Invoke [man] on [word] in other thread and show the result in tool window
      */
     fun man(word: String, man: String = "cppman") {
         if (preJob?.isCancelled == true) {
@@ -39,6 +39,9 @@ class MyApplicationService {
         }
     }
 
+    /**
+     * Invoke [man] in other thread to get a list of candidates and load them with [onLoaded]
+     */
     fun loadManCandidateWords(man: String = "cppman", onLoaded: (Collection<String>) -> Unit) {
         GlobalScope.launch {
             val list = "$man -f std::".runCommand()
