@@ -47,7 +47,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
 
         manBtn.selectedItem = null
         manBtn.addItemListener {
-            logger.debug { "Man is selected: $it" }
+            logger.debug { "Man changed: $it" }
             if (it.stateChange == ItemEvent.SELECTED) {
                 loadManCandidates()
             }
