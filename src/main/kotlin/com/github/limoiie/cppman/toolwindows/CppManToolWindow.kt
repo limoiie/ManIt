@@ -1,6 +1,8 @@
 package com.github.limoiie.cppman.toolwindows
 
 import com.github.limoiie.cppman.services.MyApplicationService
+import com.github.limoiie.cppman.services.MyApplicationService.ManEntry
+import com.github.limoiie.cppman.services.MyApplicationService.ManType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -16,6 +18,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
+import java.awt.FlowLayout
 import java.awt.event.ItemEvent
 import javax.swing.JPanel
 
@@ -28,15 +31,18 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
 
     private val topPanel = JPanel()
     private val valueTxt = TextFieldWithAutoCompletionWithBrowseButton(project)
-    private val manBtn = ComboBox(MyApplicationService.manEntries)
+
+    private val configPanel = JPanel()
+    private val manExeBox = ComboBox(MyApplicationService.manEntries)
+    private val manSectionBox = ComboBox(MyApplicationService.manSections)
 
     private val manPagePanel = JBScrollPane()
     private val manPageTxt = JBTextArea()
 
     // State fields:
 
-    private val man
-        get() = manBtn.selectedItem as MyApplicationService.ManEntry
+    private val man get() = manExeBox.selectedItem as ManEntry
+    private val manSection get() = manSectionBox.selectedItem as String
 
     init { initUi() }
 
@@ -45,29 +51,53 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     private fun initUi() {
         logger.debug { "toolWindow: $toolWindow" }
 
-        manBtn.selectedItem = null
-        manBtn.addItemListener {
+        // man config panel
+
+        val actionUpdateConfigPanel = { it: ItemEvent ->
             logger.debug { "Man changed: $it" }
             if (it.stateChange == ItemEvent.SELECTED) {
                 loadManCandidates()
+                val item = it.item as ManEntry
+                manSectionBox.isVisible =
+                    item.type == ManType.StandardMan
             }
         }
-        manBtn.selectedIndex = 0  // set default man
 
-        valueTxt.childComponent.toolTipText = "Input the value to man with"
+        manExeBox.selectedItem = null
+        manExeBox.addItemListener(actionUpdateConfigPanel)
+        manExeBox.selectedIndex = 0  // set default man
+        manSectionBox.addItemListener(actionUpdateConfigPanel)
+        manSectionBox.selectedIndex = 0  // set default man
+
+        manExeBox.setMinimumAndPreferredWidth(96)
+        manSectionBox.setMinimumAndPreferredWidth(48)
+
+        configPanel.layout = FlowLayout(FlowLayout.LEFT, 0, 0)
+        configPanel.add(manExeBox)
+        configPanel.add(manSectionBox)
+
+        // man word panel
+
+        valueTxt.childComponent.toolTipText = "The value to man with"
         valueTxt.childComponent.setPlaceholder("std::*")
         valueTxt.setButtonIcon(AllIcons.Actions.Refresh)
         valueTxt.addActionListener {
-            service<MyApplicationService>().man(valueTxt.text, man.type)
+            service<MyApplicationService>().man(valueTxt.text, man.type, manSection)
         }
+
+        // top panel = man config panel + man word panel
 
         topPanel.layout = BorderLayout()
         topPanel.add(valueTxt, BorderLayout.CENTER)
-        topPanel.add(manBtn, BorderLayout.WEST)
+        topPanel.add(configPanel, BorderLayout.WEST)
+
+        // man page panel
 
         manPageTxt.isEditable = false
         manPagePanel.setViewportView(manPageTxt)
         manPagePanel.autoscrolls = true
+
+        // tool window content = top panel + man page panel
 
         toolWindowContent.layout = BorderLayout()
         toolWindowContent.add(topPanel, BorderLayout.NORTH)
@@ -94,7 +124,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     private fun loadManCandidates() {
         logger.debug { "load candidates for $man"}
 
-        service<MyApplicationService>().loadManCandidateWords(man.type) {
+        service<MyApplicationService>().loadManCandidateWords(man.type, manSection) {
             valueTxt.setAutoCompletionItems(it)
         }
     }

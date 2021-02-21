@@ -25,12 +25,18 @@ class MyApplicationService {
             ManEntry(ManType.CppMan, "CppMan")
         )
 
-        private val men = mapOf(
-            ManType.StandardMan to Man(),
-            ManType.CppMan to CppMan(),
+        const val allSections = "*"
+
+        val manSections = arrayOf(
+            allSections, "1", "2", "3", "4", "5", "6", "7", "8", "9", "l", "n"
         )
 
     }
+
+    private val men = mapOf(
+        ManType.StandardMan to Man(),
+        ManType.CppMan to CppMan(),
+    )
 
     private val logger = logger<MyApplicationService>()
     private var preJob: Job? = null
@@ -43,14 +49,14 @@ class MyApplicationService {
     /**
      * Invoke [man] on [word] in other thread and show the result in tool window
      */
-    fun man(word: String, man: ManType) {
+    fun man(word: String, man: ManType, section: String? = null) {
         if (preJob?.isCancelled == true) {
             preJob?.cancel()
         }
         preJob = GlobalScope.launch {
             withTimeoutOrNull(10_000) {
                 if (!isActive) return@withTimeoutOrNull
-                page = men[man]?.manPage(word)
+                page = men[man]?.manPage(word, section)
 
                 if (!isActive) return@withTimeoutOrNull
                 ApplicationManager.getApplication().invokeLater {
@@ -63,9 +69,9 @@ class MyApplicationService {
     /**
      * Invoke [man] in other thread to get a list of candidates and load them with [onLoaded]
      */
-    fun loadManCandidateWords(man: ManType, onLoaded: (Collection<String>) -> Unit) {
+    fun loadManCandidateWords(man: ManType, section: String? = null, onLoaded: (Collection<String>) -> Unit) {
         GlobalScope.launch {
-            val candidates = men[man]?.candidates()
+            val candidates = men[man]?.candidates(section)
             if (candidates != null) {
                 onLoaded(candidates)
             }

@@ -16,12 +16,12 @@ class CppMan(private val man : String = "cppman") : ManTool {
         candidates
     }
 
-    override fun manPage(word: String): String? {
+    override fun manPage(word: String, section: String?): String? {
         val page = "$man $word".runCommand()
         logger.debug { page?: "Failed to run $man" }
         return page
     }
 
-    override fun candidates(): Collection<String> = candidates
+    override fun candidates(section: String?): Collection<String> = candidates
 
 }
