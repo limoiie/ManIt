@@ -66,8 +66,10 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         manExeBox.selectedItem = null
         manExeBox.addItemListener(actionUpdateConfigPanel)
         manExeBox.selectedIndex = 0  // set default man
+        manExeBox.toolTipText = "Man executable"
         manSectionBox.addItemListener(actionUpdateConfigPanel)
         manSectionBox.selectedIndex = 0  // set default man
+        manSectionBox.toolTipText = "Man section"
 
         manExeBox.setMinimumAndPreferredWidth(96)
         manSectionBox.setMinimumAndPreferredWidth(48)
@@ -124,8 +126,14 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     private fun loadManCandidates() {
         logger.debug { "load candidates for $man"}
 
-        service<MyApplicationService>().loadManCandidateWords(man.type, manSection) {
-            valueTxt.setAutoCompletionItems(it)
+        val manType = man.type
+        val manSec = manSection
+        service<MyApplicationService>().loadManCandidateWords(manType, manSec) {
+            ApplicationManager.getApplication().invokeLater {
+                if (man.type == manType && manSection == manSec) { // update only if not outdated
+                    valueTxt.setAutoCompletionItems(it)
+                }
+            }
         }
     }
 
