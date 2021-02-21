@@ -15,7 +15,7 @@ interface ManTool {
     fun candidates(section: String? = null): Collection<String>
 
     /**
-     * Set as [MyApplicationService.manSections] if [section] is invalid
+     * Set as [MyApplicationService.allSections] if [section] is invalid
      */
     fun fixSection(section: String?): String {
         if (section !in MyApplicationService.manSections) {

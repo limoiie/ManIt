@@ -5,6 +5,7 @@ import com.github.limoiie.cppman.mantool.CppMan
 import com.github.limoiie.cppman.mantool.Man
 import com.github.limoiie.cppman.toolwindows.CppManToolWindowFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.*
 
@@ -27,8 +28,19 @@ class MyApplicationService {
 
         const val allSections = "*"
 
-        val manSections = arrayOf(
-            allSections, "1", "2", "3", "4", "5", "6", "7", "8", "9", "l", "n"
+        val manSections = mapOf(
+            allSections to "All Sections",
+            "1" to "Executable programs or shell commands",
+            "2" to "System calls (functions provided by the kernel)",
+            "3" to "Library calls (functions within program libraries)",
+            "4" to "Special files (usually found in /dev)",
+            "5" to "File formats and conventions eg /etc/passwd",
+            "6" to "Games",
+            "7" to "Miscellaneous (including macro packages and conventions)",
+            "8" to "System administration comman0ds (usually only for root)",
+            "9" to "Kernel routines",
+            "l" to "Local documentation",
+            "n" to "New manpage"
         )
 
     }
@@ -70,6 +82,8 @@ class MyApplicationService {
      * Invoke [man] in other thread to get a list of candidates and load them with [onLoaded]
      */
     fun loadManCandidateWords(man: ManType, section: String? = null, onLoaded: (Collection<String>) -> Unit) {
+        logger.debug { "load man completion list for $man in $section" }
+
         GlobalScope.launch {
             val candidates = men[man]?.candidates(section)
             if (candidates != null) {

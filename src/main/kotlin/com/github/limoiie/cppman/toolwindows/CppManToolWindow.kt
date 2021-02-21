@@ -3,6 +3,7 @@ package com.github.limoiie.cppman.toolwindows
 import com.github.limoiie.cppman.services.MyApplicationService
 import com.github.limoiie.cppman.services.MyApplicationService.ManEntry
 import com.github.limoiie.cppman.services.MyApplicationService.ManType
+import com.github.limoiie.cppman.ui.components.ComboBoxTooltipRender
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -34,7 +35,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
 
     private val configPanel = JPanel()
     private val manExeBox = ComboBox(MyApplicationService.manEntries)
-    private val manSectionBox = ComboBox(MyApplicationService.manSections)
+    private val manSectionBox = ComboBox(MyApplicationService.manSections.keys.toTypedArray())
 
     private val manPagePanel = JBScrollPane()
     private val manPageTxt = JBTextArea()
@@ -67,9 +68,15 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         manExeBox.addItemListener(actionUpdateConfigPanel)
         manExeBox.selectedIndex = 0  // set default man
         manExeBox.toolTipText = "Man executable"
+
+        val tooltips = MyApplicationService.manSections.values.toList()
+        val render = ComboBoxTooltipRender(tooltips)
+
+        manSectionBox.renderer = render
         manSectionBox.addItemListener(actionUpdateConfigPanel)
         manSectionBox.selectedIndex = 0  // set default man
         manSectionBox.toolTipText = "Man section"
+
 
         manExeBox.setMinimumAndPreferredWidth(96)
         manSectionBox.setMinimumAndPreferredWidth(48)
