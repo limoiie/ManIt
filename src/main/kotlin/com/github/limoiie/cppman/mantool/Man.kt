@@ -41,6 +41,9 @@ class Man(private val man : String = "man") : ManTool {
             .toList()
     }
 
+    /**
+     * Parse [word], which is like keyword(section), into pair of section 'to' keyword
+     */
     private fun fnParseWord(word: String): Pair<String, String> {
         var section = "n"
         var keyword = word
