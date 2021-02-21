@@ -1,14 +1,36 @@
 package com.github.limoiie.cppman.services
 
 import com.github.limoiie.cppman.MyBundle
-import com.github.limoiie.cppman.runCommand
+import com.github.limoiie.cppman.mantool.CppMan
+import com.github.limoiie.cppman.mantool.Man
 import com.github.limoiie.cppman.toolwindows.CppManToolWindowFactory
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.*
 
 class MyApplicationService {
+
+    enum class ManType {
+        StandardMan,
+        CppMan
+    }
+
+    data class ManEntry(val type: ManType, val desc: String) {
+        override fun toString() = desc
+    }
+
+    companion object {
+        val manEntries = arrayOf(
+            ManEntry(ManType.StandardMan, "Man"),
+            ManEntry(ManType.CppMan, "CppMan")
+        )
+
+        private val men = mapOf(
+            ManType.StandardMan to Man(),
+            ManType.CppMan to CppMan(),
+        )
+
+    }
 
     private val logger = logger<MyApplicationService>()
     private var preJob: Job? = null
@@ -21,15 +43,14 @@ class MyApplicationService {
     /**
      * Invoke [man] on [word] in other thread and show the result in tool window
      */
-    fun man(word: String, man: String = "cppman") {
+    fun man(word: String, man: ManType) {
         if (preJob?.isCancelled == true) {
             preJob?.cancel()
         }
         preJob = GlobalScope.launch {
             withTimeoutOrNull(10_000) {
                 if (!isActive) return@withTimeoutOrNull
-                page = "$man $word".runCommand()
-                logger.debug { page?: "Failed to run $man" }
+                page = men[man]?.manPage(word)
 
                 if (!isActive) return@withTimeoutOrNull
                 ApplicationManager.getApplication().invokeLater {
@@ -42,13 +63,11 @@ class MyApplicationService {
     /**
      * Invoke [man] in other thread to get a list of candidates and load them with [onLoaded]
      */
-    fun loadManCandidateWords(man: String = "cppman", onLoaded: (Collection<String>) -> Unit) {
+    fun loadManCandidateWords(man: ManType, onLoaded: (Collection<String>) -> Unit) {
         GlobalScope.launch {
-            val list = "$man -f std::".runCommand()
-            val candidates = list?.splitToSequence('\n')
-                ?.map { it.split('-').first().trim() }
+            val candidates = men[man]?.candidates()
             if (candidates != null) {
-                onLoaded(candidates.toList())
+                onLoaded(candidates)
             }
         }
     }
