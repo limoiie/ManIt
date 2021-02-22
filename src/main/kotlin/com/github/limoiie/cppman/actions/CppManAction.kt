@@ -2,7 +2,7 @@ package com.github.limoiie.cppman.actions
 
 import com.github.limoiie.cppman.OCUtils
 import com.github.limoiie.cppman.isInlineNamespace
-import com.github.limoiie.cppman.services.MyApplicationService
+import com.github.limoiie.cppman.services.OuterManAppService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -24,7 +24,7 @@ class CppManAction : AnAction() {
             val qualifiedName = getQualifiedName(psiElem)
             if (qualifiedName != null) {
                 logger.info("Qualified Name: $qualifiedName")
-                service<MyApplicationService>().man(qualifiedName, MyApplicationService.ManType.CppMan)
+                service<OuterManAppService>().man(qualifiedName, OuterManAppService.ManType.CppMan)
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.github.limoiie.cppman.mantool
 
-import com.github.limoiie.cppman.services.MyApplicationService
+import com.github.limoiie.cppman.services.OuterManAppService
 
 interface ManTool {
 
@@ -15,11 +15,11 @@ interface ManTool {
     fun candidates(section: String? = null): Collection<String>
 
     /**
-     * Set as [MyApplicationService.allSections] if [section] is invalid
+     * Set as [OuterManAppService.allSections] if [section] is invalid
      */
     fun fixSection(section: String?): String {
-        if (section !in MyApplicationService.manSections) {
-            return MyApplicationService.allSections
+        if (section !in OuterManAppService.manSections) {
+            return OuterManAppService.allSections
         }
         return section!!
     }

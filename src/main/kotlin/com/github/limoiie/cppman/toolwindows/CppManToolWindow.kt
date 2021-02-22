@@ -1,8 +1,8 @@
 package com.github.limoiie.cppman.toolwindows
 
-import com.github.limoiie.cppman.services.MyApplicationService
-import com.github.limoiie.cppman.services.MyApplicationService.ManEntry
-import com.github.limoiie.cppman.services.MyApplicationService.ManType
+import com.github.limoiie.cppman.services.OuterManAppService
+import com.github.limoiie.cppman.services.OuterManAppService.ManEntry
+import com.github.limoiie.cppman.services.OuterManAppService.ManType
 import com.github.limoiie.cppman.ui.components.ComboBoxTooltipRender
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
@@ -35,8 +35,8 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     private val valueTxt = TextFieldWithAutoCompletionWithBrowseButton(project)
 
     private val configPanel = JPanel()
-    private val manExeBox = ComboBox(MyApplicationService.manEntries)
-    private val manSectionBox = ComboBox(MyApplicationService.manSections.keys.toTypedArray())
+    private val manExeBox = ComboBox(OuterManAppService.manEntries)
+    private val manSectionBox = ComboBox(OuterManAppService.manSections.keys.toTypedArray())
 
     private val manPagePanel = JBScrollPane()
     private val manPageTxt = JBTextArea()
@@ -78,7 +78,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         manExeBox.selectedIndex = 0 // set default man
         manExeBox.toolTipText = "Man executable"
 
-        val tooltips = MyApplicationService.manSections.values.toList()
+        val tooltips = OuterManAppService.manSections.values.toList()
         val render = ComboBoxTooltipRender(tooltips)
 
         manSectionBox.renderer = render
@@ -99,7 +99,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         valueTxt.childComponent.setPlaceholder("std::*")
         valueTxt.setButtonIcon(AllIcons.Actions.Refresh)
         valueTxt.addActionListener {
-            service<MyApplicationService>().man(valueTxt.text, man.type, manSection)
+            service<OuterManAppService>().man(valueTxt.text, man.type, manSection)
         }
 
         // top panel = man config panel + man word panel
@@ -144,7 +144,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
 
         val manType = man.type
         val manSec = manSection
-        service<MyApplicationService>().loadManCandidateWords(manType, manSec) {
+        service<OuterManAppService>().loadManCandidateWords(manType, manSec) {
             ApplicationManager.getApplication().invokeLater {
                 if (man.type == manType && manSection == manSec) { // update only if not outdated
                     valueTxt.setAutoCompletionItems(it)

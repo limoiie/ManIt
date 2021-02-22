@@ -13,7 +13,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
 
-class MyApplicationService {
+class OuterManAppService {
     enum class ManType {
         StandardMan,
         CppMan
@@ -54,7 +54,7 @@ class MyApplicationService {
         ManType.CppMan to CppMan(),
     )
 
-    private val logger = logger<MyApplicationService>()
+    private val logger = logger<OuterManAppService>()
     private var preJob: Job? = null
     private var page: String? = null
 

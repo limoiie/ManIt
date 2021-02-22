@@ -1,7 +1,7 @@
 package com.github.limoiie.cppman.mantool
 
 import com.github.limoiie.cppman.runCommand
-import com.github.limoiie.cppman.services.MyApplicationService
+import com.github.limoiie.cppman.services.OuterManAppService
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 
@@ -24,7 +24,7 @@ class Man(private val man: String = "man") : ManTool {
 
     override fun manPage(word: String, section: String?): String? {
         var sec = fixSection(section)
-        if (sec == MyApplicationService.allSections) {
+        if (sec == OuterManAppService.allSections) {
             sec = ""
         }
 
