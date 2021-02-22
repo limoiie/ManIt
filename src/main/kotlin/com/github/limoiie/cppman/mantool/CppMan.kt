@@ -4,7 +4,7 @@ import com.github.limoiie.cppman.runCommand
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 
-class CppMan(private val man : String = "cppman") : ManTool {
+class CppMan(private val man: String = "cppman") : ManTool {
     private val logger = logger<Man>()
 
     private val candidates by lazy {
@@ -18,10 +18,9 @@ class CppMan(private val man : String = "cppman") : ManTool {
 
     override fun manPage(word: String, section: String?): String? {
         val page = "$man $word".runCommand()
-        logger.debug { page?: "Failed to run $man" }
+        logger.debug { page ?: "Failed to run $man" }
         return page
     }
 
     override fun candidates(section: String?): Collection<String> = candidates
-
 }

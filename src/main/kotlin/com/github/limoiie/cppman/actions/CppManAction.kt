@@ -14,7 +14,6 @@ import com.jetbrains.cidr.lang.psi.OCSymbolDeclarator
 import com.jetbrains.cidr.lang.symbols.OCSymbol
 import com.jetbrains.cidr.lang.symbols.OCSymbolWithParent
 
-
 class CppManAction : AnAction() {
     private val logger = logger<CppManAction>()
 
@@ -66,5 +65,4 @@ class CppManAction : AnAction() {
         // inline namespace is skipped
         return !sym.isInlineNamespace()
     }
-
 }

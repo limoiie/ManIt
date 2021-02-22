@@ -5,17 +5,17 @@ import com.github.limoiie.cppman.services.MyApplicationService
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 
-class Man(private val man : String = "man") : ManTool {
+class Man(private val man: String = "man") : ManTool {
     private val logger = logger<Man>()
 
     private val candidates by lazy {
         val list = "$man -f .".runCommand()
-        val candidates = list?.splitToSequence('\n')  // lines: <line> \n <line> ... => <line>*
-            ?.map { it.split(" - ").first() }   // line: <words> - <description> => <words>*
-            ?.flatMap { it.split(',').asSequence() }  // words: <word>, <word> ... => <word>*
+        val candidates = list?.splitToSequence('\n') // lines: <line> \n <line> ... => <line>*
+            ?.map { it.split(" - ").first() } // line: <words> - <description> => <words>*
+            ?.flatMap { it.split(',').asSequence() } // words: <word>, <word> ... => <word>*
             ?.map { it.trim() }
-            ?.map { fnParseWord(it) }  // word: <token>(<section>) => (<section> -> <token>)*
-            ?.groupBy({ it.first.subSequence(0, 1) }) {it.second}  //
+            ?.map { fnParseWord(it) } // word: <token>(<section>) => (<section> -> <token>)*
+            ?.groupBy({ it.first.subSequence(0, 1) }) { it.second } //
             ?: mapOf()
 
         logger.debug { "Man candidates size: ${candidates.size}" }
@@ -29,15 +29,14 @@ class Man(private val man : String = "man") : ManTool {
         }
 
         val page = "$man $sec $word".runCommand()
-        logger.debug { page?: "Failed to run $man" }
+        logger.debug { page ?: "Failed to run $man" }
         return page
     }
 
     override fun candidates(section: String?): Collection<String> {
         val sec = fixSection(section)
-        return candidates[sec]?:
-        candidates.asSequence()  // (section -> words)*
-            .flatMap { it.value.asSequence() }  // // (word)*
+        return candidates[sec] ?: candidates.asSequence() // (section -> words)*
+            .flatMap { it.value.asSequence() } // // (word)*
             .toList()
     }
 
@@ -51,12 +50,13 @@ class Man(private val man : String = "man") : ManTool {
         // <keyword>(<section>)
         val re = Regex("(.*)\\((.*)\\).*")
         val r = re.matchEntire(word)
-        if (r != null && r.groupValues.size == 3) {
+
+        val groupSize = 1 + 2 // 1 for all and 2 for
+        if (r != null && r.groupValues.size == groupSize) {
             section = r.groupValues[2]
             keyword = r.groupValues[1]
         }
 
         return section to keyword
     }
-
 }

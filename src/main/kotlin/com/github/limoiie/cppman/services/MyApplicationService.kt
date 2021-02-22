@@ -7,10 +7,13 @@ import com.github.limoiie.cppman.toolwindows.CppManToolWindowFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.launch
 
 class MyApplicationService {
-
     enum class ManType {
         StandardMan,
         CppMan
@@ -21,6 +24,8 @@ class MyApplicationService {
     }
 
     companion object {
+        const val MAN_TIMEOUT: Long = 10_000
+
         val manEntries = arrayOf(
             ManEntry(ManType.StandardMan, "Man"),
             ManEntry(ManType.CppMan, "CppMan")
@@ -42,7 +47,6 @@ class MyApplicationService {
             "l" to "Local documentation",
             "n" to "New manpage"
         )
-
     }
 
     private val men = mapOf(
@@ -66,7 +70,7 @@ class MyApplicationService {
             preJob?.cancel()
         }
         preJob = GlobalScope.launch {
-            withTimeoutOrNull(10_000) {
+            withTimeoutOrNull(MAN_TIMEOUT) {
                 if (!isActive) return@withTimeoutOrNull
                 page = men[man]?.manPage(word, section)
 
@@ -91,5 +95,4 @@ class MyApplicationService {
             }
         }
     }
-
 }

@@ -45,7 +45,15 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     private val man get() = manExeBox.selectedItem as ManEntry
     private val manSection get() = manSectionBox.selectedItem as String
 
-    init { initUi() }
+    companion object {
+        const val maxExeBoxWidth = 96
+        const val maxSectionBoxWidth = 48
+        const val gapForUpdateLater = 100L
+    }
+
+    init {
+        initUi()
+    }
 
     fun getContent(): JPanel = toolWindowContent
 
@@ -66,7 +74,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
 
         manExeBox.selectedItem = null
         manExeBox.addItemListener(actionUpdateConfigPanel)
-        manExeBox.selectedIndex = 0  // set default man
+        manExeBox.selectedIndex = 0 // set default man
         manExeBox.toolTipText = "Man executable"
 
         val tooltips = MyApplicationService.manSections.values.toList()
@@ -74,12 +82,11 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
 
         manSectionBox.renderer = render
         manSectionBox.addItemListener(actionUpdateConfigPanel)
-        manSectionBox.selectedIndex = 0  // set default man
+        manSectionBox.selectedIndex = 0 // set default man
         manSectionBox.toolTipText = "Man section"
 
-
-        manExeBox.setMinimumAndPreferredWidth(96)
-        manSectionBox.setMinimumAndPreferredWidth(48)
+        manExeBox.setMinimumAndPreferredWidth(maxExeBoxWidth)
+        manSectionBox.setMinimumAndPreferredWidth(maxSectionBoxWidth)
 
         configPanel.layout = FlowLayout(FlowLayout.LEFT, 0, 0)
         configPanel.add(manExeBox)
@@ -117,11 +124,11 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         logger.debug { "updateUi with man value $word" }
 
         valueTxt.text = word
-        manPageTxt.text = manPage?: ""
+        manPageTxt.text = manPage ?: ""
 
         // reset the scrollBar of manPageLayout after update the text
-        GlobalScope.launch {  // call invokeLater in other thread rather than the ui one
-            delay(100)
+        GlobalScope.launch { // call invokeLater in other thread rather than the ui one
+            delay(gapForUpdateLater)
             // so that the manPageLayout could be updated before resetting its ScrollBar
             ApplicationManager.getApplication().invokeLater {
                 manPagePanel.verticalScrollBar.value = 0
@@ -131,7 +138,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     }
 
     private fun loadManCandidates() {
-        logger.debug { "load candidates for $man"}
+        logger.debug { "load candidates for $man" }
 
         val manType = man.type
         val manSec = manSection
@@ -143,5 +150,4 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
             }
         }
     }
-
 }
