@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -110,6 +111,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         // man page panel
 
         manPageTxt.isEditable = false
+        manPageTxt.font = UIUtil.getToolTipFont()
         manPagePanel.setViewportView(manPageTxt)
         manPagePanel.autoscrolls = true
 
