@@ -46,9 +46,15 @@ repositories {
 }
 dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.15.0")
-    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion") {
+        exclude("org.slf4j", "slf4j-api")
+    }
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion") {
+        exclude("org.slf4j", "slf4j-api")
+    }
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion") {
+        exclude("org.slf4j", "slf4j-api")
+    }
     implementation("org.xerial:sqlite-jdbc:$sqliteJDBCVersion")
 }
 
