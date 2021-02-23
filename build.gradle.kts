@@ -33,6 +33,9 @@ val platformVersion: String by project
 val platformPlugins: String by project
 val platformDownloadSources: String by project
 
+val exposedVersion: String by project
+val sqliteJDBCVersion: String by project
+
 group = pluginGroup
 version = pluginVersion
 
@@ -43,6 +46,10 @@ repositories {
 }
 dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.15.0")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.xerial:sqlite-jdbc:$sqliteJDBCVersion")
 }
 
 // Configure gradle-intellij-plugin plugin.
