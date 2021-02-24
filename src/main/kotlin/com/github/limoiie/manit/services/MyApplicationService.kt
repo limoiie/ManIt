@@ -1,6 +1,6 @@
-package org.jetbrains.plugins.template.services
+package com.github.limoiie.manit.services
 
-import org.jetbrains.plugins.template.MyBundle
+import com.github.limoiie.manit.MyBundle
 
 class MyApplicationService {
 
