@@ -10,6 +10,6 @@ class ManSection(id: EntityID<Int>) : IntEntity(id) {
     var name by ManSections.name
 
     override fun toString(): String {
-        return "ManSection[n:$name]"
+        return name
     }
 }

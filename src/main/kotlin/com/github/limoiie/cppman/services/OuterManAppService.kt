@@ -3,6 +3,7 @@ package com.github.limoiie.cppman.services
 import com.github.limoiie.cppman.MyBundle
 import com.github.limoiie.cppman.mantool.CppMan
 import com.github.limoiie.cppman.mantool.Man
+import com.github.limoiie.cppman.mantool.MyMan
 import com.github.limoiie.cppman.toolwindows.CppManToolWindowFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
@@ -16,7 +17,8 @@ import kotlinx.coroutines.launch
 class OuterManAppService {
     enum class ManType {
         StandardMan,
-        CppMan
+        CppMan,
+        MyMan,
     }
 
     data class ManEntry(val type: ManType, val desc: String) {
@@ -27,8 +29,9 @@ class OuterManAppService {
         const val MAN_TIMEOUT: Long = 10_000
 
         val manEntries = arrayOf(
+            ManEntry(ManType.MyMan, "MyMan"),
             ManEntry(ManType.StandardMan, "Man"),
-            ManEntry(ManType.CppMan, "CppMan")
+            ManEntry(ManType.CppMan, "CppMan"),
         )
 
         const val allSections = "*"
@@ -50,6 +53,7 @@ class OuterManAppService {
     }
 
     private val men = mapOf(
+        ManType.MyMan to MyMan(),
         ManType.StandardMan to Man(),
         ManType.CppMan to CppMan(),
     )

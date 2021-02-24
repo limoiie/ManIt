@@ -1,8 +1,9 @@
 package com.github.limoiie.cppman.toolwindows
 
+import com.github.limoiie.cppman.database.dao.ManSection
+import com.github.limoiie.cppman.services.ManDbAppService
 import com.github.limoiie.cppman.services.OuterManAppService
-import com.github.limoiie.cppman.services.OuterManAppService.ManEntry
-import com.github.limoiie.cppman.services.OuterManAppService.ManType
+import com.github.limoiie.cppman.database.dao.ManSet
 import com.github.limoiie.cppman.ui.components.ComboBoxTooltipRender
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
@@ -35,16 +36,16 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     private val valueTxt = TextFieldWithAutoCompletionWithBrowseButton(project)
 
     private val configPanel = JPanel()
-    private val manExeBox = ComboBox(OuterManAppService.manEntries)
-    private val manSectionBox = ComboBox(OuterManAppService.manSections.keys.toTypedArray())
+    private val manSetBox = ComboBox<ManSet>()
+    private val manSectionBox = ComboBox<ManSection>()
 
     private val manPagePanel = JBScrollPane()
     private val manPageTxt = JBTextArea()
 
     // State fields:
 
-    private val man get() = manExeBox.selectedItem as ManEntry
-    private val manSection get() = manSectionBox.selectedItem as String
+    private val man get() = manSetBox.selectedItem as ManSet
+    private val manSection get() = manSectionBox.selectedItem as ManSection
 
     companion object {
         const val maxExeBoxWidth = 96
@@ -53,7 +54,13 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     }
 
     init {
-        initUi()
+        service<ManDbAppService>().addOnIndexedListener {
+            ApplicationManager.getApplication().invokeLater {
+                allManSets.forEach { manSetBox.addItem(it) }
+                allManSections.forEach { manSectionBox.addItem(it) }
+                initUi()
+            }
+        }
     }
 
     fun getContent(): JPanel = toolWindowContent
@@ -67,16 +74,16 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
             logger.debug { "Man changed: $it" }
             if (it.stateChange == ItemEvent.SELECTED) {
                 loadManCandidates()
-                val item = it.item as ManEntry
-                manSectionBox.isVisible =
-                    item.type == ManType.StandardMan
+//                val item = it.item as ManEntry
+//                manSectionBox.isVisible =
+//                    item.type != ManType.CppMan
             }
         }
 
-        manExeBox.selectedItem = null
-        manExeBox.addItemListener(actionUpdateConfigPanel)
-        manExeBox.selectedIndex = 0 // set default man
-        manExeBox.toolTipText = "Man executable"
+        manSetBox.selectedItem = null
+        manSetBox.addItemListener(actionUpdateConfigPanel)
+        manSetBox.selectedIndex = 0 // set default man
+        manSetBox.toolTipText = "Man executable"
 
         val tooltips = OuterManAppService.manSections.values.toList()
         val render = ComboBoxTooltipRender(tooltips)
@@ -86,11 +93,11 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         manSectionBox.selectedIndex = 0 // set default man
         manSectionBox.toolTipText = "Man section"
 
-        manExeBox.setMinimumAndPreferredWidth(maxExeBoxWidth)
+        manSetBox.setMinimumAndPreferredWidth(maxExeBoxWidth)
         manSectionBox.setMinimumAndPreferredWidth(maxSectionBoxWidth)
 
         configPanel.layout = FlowLayout(FlowLayout.LEFT, 0, 0)
-        configPanel.add(manExeBox)
+        configPanel.add(manSetBox)
         configPanel.add(manSectionBox)
 
         // man word panel
@@ -99,7 +106,16 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         valueTxt.childComponent.setPlaceholder("std::*")
         valueTxt.setButtonIcon(AllIcons.Actions.Refresh)
         valueTxt.addActionListener {
-            service<OuterManAppService>().man(valueTxt.text, man.type, manSection)
+            // todo - load manpage
+            service<ManDbAppService>().addOnIndexedListener {
+                val keyword = valueTxt.text
+                manpage(keyword) {
+                    ApplicationManager.getApplication().invokeLater {
+                        updateUi(keyword, it)
+                    }
+                }
+            }
+//            service<OuterManAppService>().man(valueTxt.text, man.type, manSection)
         }
 
         // top panel = man config panel + man word panel
@@ -141,14 +157,9 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
 
     private fun loadManCandidates() {
         logger.debug { "load candidates for $man" }
-
-        val manType = man.type
-        val manSec = manSection
-        service<OuterManAppService>().loadManCandidateWords(manType, manSec) {
-            ApplicationManager.getApplication().invokeLater {
-                if (man.type == manType && manSection == manSec) { // update only if not outdated
-                    valueTxt.setAutoCompletionItems(it)
-                }
+        service<ManDbAppService>().addOnIndexedListener {
+            keywords(listOf(manSection), man) {
+                valueTxt.setAutoCompletionItems(it)
             }
         }
     }

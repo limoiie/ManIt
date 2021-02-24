@@ -3,8 +3,10 @@ package com.github.limoiie.cppman.services.impls
 import com.github.limoiie.cppman.database.dao.ManFile
 import com.github.limoiie.cppman.database.dao.ManKeyword
 import com.github.limoiie.cppman.database.dao.ManSection
+import com.github.limoiie.cppman.database.dao.ManSet
 import com.github.limoiie.cppman.database.dao.ManSource
 import com.github.limoiie.cppman.database.dsl.ManFileSections
+import com.github.limoiie.cppman.database.dsl.ManSetSources
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.exposed.sql.insert
@@ -13,6 +15,7 @@ import java.nio.file.Path
 
 object ManIndex {
     private const val manPrefix = "man"
+    private const val nameOfAllManSet = "All"
     private val logger = logger<ManIndex>()
 
     /**
@@ -22,9 +25,31 @@ object ManIndex {
      */
     fun indexSources(manSourcePaths: List<Path>) {
         manSourcePaths.forEach(ManIndex::indexOneSource)
+        addDefaultManSet()
         logger.debug {
             val c = ManFile.count()
             "ManFile Count: $c"
+        }
+    }
+
+    /**
+     * Return true if the table [ManSource] is not empty.
+     *
+     * Fixme - record this information in a better way
+     */
+    fun isIndexed(): Boolean {
+        return ManSource.count() > 0
+    }
+
+    private fun addDefaultManSet() {
+        val set = ManSet.new {
+            name = nameOfAllManSet
+        }
+        ManSource.all().forEach { src ->
+            ManSetSources.insert {
+                it[manSet] = set.id
+                it[manSource] = src.id
+            }
         }
     }
 
