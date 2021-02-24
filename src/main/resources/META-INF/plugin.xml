@@ -8,12 +8,19 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.limoiie.manit.services.MyApplicationService"/>
+        <applicationService serviceImplementation="com.github.limoiie.manit.services.OuterManAppService"/>
         <projectService serviceImplementation="com.github.limoiie.manit.services.MyProjectService"/>
+        <toolWindow id="Cpp Man" secondary="true" icon="AllIcons.General.Modified" anchor="right"
+                    factoryClass="com.github.limoiie.manit.toolwindows.CppManToolWindowFactory" />
+        <applicationService serviceImplementation="com.github.limoiie.manit.services.ManDbAppService"/>
     </extensions>
 
     <applicationListeners>
         <listener class="com.github.limoiie.manit.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+
+    <actions>
+    </actions>
+
 </idea-plugin>
