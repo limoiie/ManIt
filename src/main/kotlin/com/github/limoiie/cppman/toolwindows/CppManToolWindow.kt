@@ -42,7 +42,7 @@ class CppManToolWindow(project: Project) {
 
     // State fields:
 
-    private val man get() = manSetBox.selectedItem as ManSet
+    private val manSet get() = manSetBox.selectedItem as ManSet
     private val manSection get() = manSectionBox.selectedItem as ManSection
 
     companion object {
@@ -103,9 +103,9 @@ class CppManToolWindow(project: Project) {
             // todo - load manpage
             service<ManDbAppService>().addOnIndexedListener {
                 val keyword = valueTxt.text
-                manpage(keyword) {
+                manpage(keyword, manSet, selectedSections()) {
                     ApplicationManager.getApplication().invokeLater {
-                        updateUi(keyword, it)
+                        showManPage(keyword, it)
                     }
                 }
             }
@@ -131,11 +131,11 @@ class CppManToolWindow(project: Project) {
         toolWindowContent.add(manPagePanel, BorderLayout.CENTER)
     }
 
-    fun updateUi(word: String, manPage: String? = null) {
+    fun showManPage(word: String, manPage: String? = null) {
         logger.debug { "updateUi with man value $word" }
 
         valueTxt.text = word
-        manPageTxt.text = manPage ?: ""
+        manPageTxt.text = manPage ?: "The Man Page Does Not Exist!!"
 
         // reset the scrollBar of manPageLayout after update the text
         GlobalScope.launch { // call invokeLater in other thread rather than the ui one
@@ -149,12 +149,16 @@ class CppManToolWindow(project: Project) {
     }
 
     private fun loadManCandidates() {
-        logger.debug { "load candidates for $man" }
+        logger.debug { "load candidates for $manSet" }
 
         service<ManDbAppService>().addOnIndexedListener {
-            keywords(listOf(manSection), man) {
+            keywords(manSet, selectedSections()) {
                 valueTxt.setAutoCompletionItems(it)
             }
         }
+    }
+
+    private fun selectedSections(): List<ManSection> {
+        return listOf(manSection) // todo - check and expand all-section
     }
 }

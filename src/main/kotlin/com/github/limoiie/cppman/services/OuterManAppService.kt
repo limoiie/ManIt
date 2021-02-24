@@ -68,7 +68,7 @@ class OuterManAppService {
 
                 if (!isActive) return@withTimeoutOrNull
                 ApplicationManager.getApplication().invokeLater {
-                    CppManToolWindowFactory.cppManToolWindow?.updateUi(word, page)
+                    CppManToolWindowFactory.cppManToolWindow?.showManPage(word, page)
                 }
             }
         }

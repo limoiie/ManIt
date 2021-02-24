@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class ManDbAppService {
     private val logger = logger<ManDbAppService>()
 
-    //    private val databaseUri = "jdbc:sqlite::memory:"
+    // todo - use roaming folder
     private val databaseUri = "jdbc:sqlite:/Users/ligengwang/Downloads/test.db"
     private val databaseDriver = "org.sqlite.JDBC"
 
@@ -117,6 +117,7 @@ class ManDbAppService {
         private var allManSources: List<ManSource> = listOf()
 
         private var jobGetKeywords: Job? = null
+        private var jobGetManpage: Job? = null
 
         init {
             transaction {
@@ -127,15 +128,14 @@ class ManDbAppService {
         }
 
         fun keywords(
-            sections: Collection<ManSection>?, manSet: ManSet,
+            manSet: ManSet, sections: Collection<ManSection>?,
             onLoaded: (Collection<String>) -> Unit
         ): Job? {
             jobGetKeywords?.cancel()
             jobGetKeywords = GlobalScope.launch {
                 val keywords = transaction {
                     ManFetch.getKeywords(
-                        sections ?: allManSections,
-                        manSet.sources.toList()
+                        manSet, sections ?: allManSections
                     )
                 }
                 onLoaded(keywords)
@@ -143,11 +143,20 @@ class ManDbAppService {
             return jobGetKeywords
         }
 
-        fun manpage(keyword: String, onLoaded: (String?) -> Unit) {
-            val manFile = transaction {
-                ManFetch.getManFileByKeyword(keyword)
+        fun manpage(
+            keyword: String, manSet: ManSet, manSections: Collection<ManSection>?,
+            onLoaded: (String?) -> Unit
+        ): Job? {
+            jobGetManpage?.cancel()
+            jobGetManpage = GlobalScope.launch {
+                val manFile = transaction {
+                    ManFetch.getManFile(
+                        keyword, manSet, manSections ?: allManSections
+                    )
+                }
+                onLoaded(manFile?.path)
             }
-            onLoaded(manFile?.path)
+            return jobGetManpage
         }
     }
 }

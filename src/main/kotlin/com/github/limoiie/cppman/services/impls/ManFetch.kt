@@ -1,7 +1,6 @@
 package com.github.limoiie.cppman.services.impls
 
 import com.github.limoiie.cppman.database.dao.ManFile
-import com.github.limoiie.cppman.database.dao.ManKeyword
 import com.github.limoiie.cppman.database.dao.ManSection
 import com.github.limoiie.cppman.database.dao.ManSet
 import com.github.limoiie.cppman.database.dao.ManSource
@@ -25,9 +24,9 @@ object ManFetch {
         return ManSet.all().toList()
     }
 
-    fun getKeywords(sections: Collection<ManSection>, sources: Collection<ManSource>): List<String> {
+    fun getKeywords(manSet: ManSet, sections: Collection<ManSection>): List<String> {
         val manSections = sections.map(ManSection::id)
-        val manSources = sources.map(ManSource::id)
+        val manSources = manSet.sources.map(ManSource::id)
 
         return ManKeywords
             .leftJoin(ManFileSections, { file }, { file })
@@ -40,11 +39,23 @@ object ManFetch {
             .map { it[ManKeywords.keyword] }
     }
 
-    fun getManFileByKeyword(keyword: String): ManFile? {
-        val manKeyword = ManKeyword
-            .find { (ManKeywords.keyword eq keyword) }
-            .firstOrNull()
-        return manKeyword?.file
-    }
+    fun getManFile(keyword: String, manSet: ManSet, sections: Collection<ManSection>): ManFile? {
+        val manSections = sections.map(ManSection::id)
+        val manSources = manSet.sources.map(ManSource::id)
 
+        val manFileId = ManKeywords
+            .leftJoin(ManFileSections, { file }, { file })
+            .leftJoin(ManFiles, { ManKeywords.file }, { id })
+            .slice(ManFiles.id)
+            .select {
+                (ManKeywords.keyword eq keyword) and
+                        (ManFileSections.section inList manSections) and
+                        (ManFiles.manSource inList manSources)
+            }
+            .limit(1)
+            .map { it[ManFiles.id] }
+            .firstOrNull()?.value ?: -1
+
+        return ManFile.findById(manFileId)
+    }
 }
