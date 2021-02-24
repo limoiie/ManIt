@@ -1,4 +1,4 @@
-package com.github.limoiie.manit.services.impls
+package com.github.limoiie.manit.services.impls.indexing
 
 import java.nio.file.Path
 

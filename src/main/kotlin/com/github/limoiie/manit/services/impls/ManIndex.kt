@@ -7,6 +7,8 @@ import com.github.limoiie.manit.database.dao.ManSet
 import com.github.limoiie.manit.database.dao.ManSource
 import com.github.limoiie.manit.database.dsl.ManFileSections
 import com.github.limoiie.manit.database.dsl.ManSetSources
+import com.github.limoiie.manit.services.impls.indexing.ManFileEntry
+import com.github.limoiie.manit.services.impls.indexing.parseManFileEntry
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.exposed.sql.insert

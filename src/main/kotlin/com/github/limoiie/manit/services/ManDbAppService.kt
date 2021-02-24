@@ -10,8 +10,10 @@ import com.github.limoiie.manit.database.dsl.ManSections
 import com.github.limoiie.manit.database.dsl.ManSetSources
 import com.github.limoiie.manit.database.dsl.ManSets
 import com.github.limoiie.manit.database.dsl.ManSources
+import com.github.limoiie.manit.mantool.renders.DefaultManpageRender
 import com.github.limoiie.manit.services.impls.ManFetch
 import com.github.limoiie.manit.services.impls.ManIndex
+import com.github.limoiie.manit.services.impls.ManPageRawLoader
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.GlobalScope
@@ -125,6 +127,8 @@ class ManDbAppService {
         private var jobGetKeywords: Job? = null
         private var jobGetManpage: Job? = null
 
+        private val render = DefaultManpageRender()
+
         init {
             transaction {
                 allManSections = ManFetch.getAllManSections()
@@ -163,7 +167,11 @@ class ManDbAppService {
                         keyword, manSet, manSections ?: allManSections
                     )
                 }
-                onLoaded(manFile?.path)
+                if (manFile != null) {
+                    val rawPage = ManPageRawLoader.loadManPage(manFile.path)
+                    val renderedPage = render.render(rawPage)
+                    onLoaded(renderedPage)
+                }
             }
             return jobGetManpage
         }

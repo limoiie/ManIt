@@ -4,6 +4,8 @@ import com.github.limoiie.manit.database.dao.ManSection
 import com.github.limoiie.manit.database.dao.ManSet
 import com.github.limoiie.manit.services.ManDbAppService
 import com.github.limoiie.manit.ui.components.ComboBoxTooltipRender
+import com.intellij.codeInsight.documentation.DocumentationComponent
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -12,18 +14,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextArea
-import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.awt.event.ItemEvent
 import javax.swing.JPanel
 
-class CppManToolWindow(project: Project) {
+class CppManToolWindow(private val project: Project) {
     private val logger = logger<CppManToolWindow>()
 
     // Ui fields:
@@ -37,8 +33,7 @@ class CppManToolWindow(project: Project) {
     private val manSetBox = ComboBox<ManSet>()
     private val manSectionBox = ComboBox<ManSection>()
 
-    private val manPagePanel = JBScrollPane()
-    private val manPageTxt = JBTextArea()
+    private var manpagePanel: DocumentationComponent? = null
 
     // State fields:
 
@@ -48,7 +43,6 @@ class CppManToolWindow(project: Project) {
     companion object {
         const val maxExeBoxWidth = 96
         const val maxSectionBoxWidth = 48
-        const val gapForUpdateLater = 100L
     }
 
     init {
@@ -119,33 +113,13 @@ class CppManToolWindow(project: Project) {
 
         // man page panel
 
-        manPageTxt.isEditable = false
-        manPageTxt.font = UIUtil.getToolTipFont()
-        manPagePanel.setViewportView(manPageTxt)
-        manPagePanel.autoscrolls = true
+        manpagePanel = createDocumentationComponent()
 
         // tool window content = top panel + man page panel
 
         toolWindowContent.layout = BorderLayout()
         toolWindowContent.add(topPanel, BorderLayout.NORTH)
-        toolWindowContent.add(manPagePanel, BorderLayout.CENTER)
-    }
-
-    fun showManPage(word: String, manPage: String? = null) {
-        logger.debug { "updateUi with man value $word" }
-
-        valueTxt.text = word
-        manPageTxt.text = manPage ?: "The Man Page Does Not Exist!!"
-
-        // reset the scrollBar of manPageLayout after update the text
-        GlobalScope.launch { // call invokeLater in other thread rather than the ui one
-            delay(gapForUpdateLater)
-            // so that the manPageLayout could be updated before resetting its ScrollBar
-            ApplicationManager.getApplication().invokeLater {
-                manPagePanel.verticalScrollBar.value = 0
-                manPagePanel.horizontalScrollBar.value = 0
-            }
-        }
+        toolWindowContent.add(manpagePanel!!, BorderLayout.CENTER)
     }
 
     private fun loadManCandidates() {
@@ -155,6 +129,25 @@ class CppManToolWindow(project: Project) {
             keywords(manSet, selectedSections()) {
                 valueTxt.setAutoCompletionItems(it)
             }
+        }
+    }
+
+    fun showManPage(word: String, manPage: String? = null) {
+        logger.debug { "updateUi with man value $word" }
+
+        valueTxt.text = word
+
+        val doc = manPage ?: "<i>The Man Page Does Not Exist!!</i>"
+        manpagePanel?.apply {
+            setData(element, doc, null, null, null)
+        }
+    }
+
+    private fun createDocumentationComponent(doc: String = ""): DocumentationComponent {
+        val docManager = DocumentationManager.getInstance(project)
+        val storeSize = false
+        return DocumentationComponent(docManager, storeSize).apply {
+            setData(element, doc, null, null, null)
         }
     }
 
