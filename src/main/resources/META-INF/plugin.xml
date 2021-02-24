@@ -1,19 +1,32 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
-    <name>Template</name>
-    <vendor>JetBrains</vendor>
+    <id>com.github.limoiie.manit</id>
+    <name>ManIt</name>
+    <vendor>limoiie</vendor>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.jetbrains.plugins.template.services.MyApplicationService"/>
-        <projectService serviceImplementation="org.jetbrains.plugins.template.services.MyProjectService"/>
+        <applicationService serviceImplementation="com.github.limoiie.manit.services.OuterManAppService"/>
+        <projectService serviceImplementation="com.github.limoiie.manit.services.MyProjectService"/>
+        <toolWindow id="Cpp Man" secondary="true" icon="AllIcons.General.Modified" anchor="right"
+                    factoryClass="com.github.limoiie.manit.toolwindows.CppManToolWindowFactory" />
+        <applicationService serviceImplementation="com.github.limoiie.manit.services.ManDbAppService"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="org.jetbrains.plugins.template.listeners.MyProjectManagerListener"
+        <listener class="com.github.limoiie.manit.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+
+    <actions>
+<!--        <action id="com.github.limoiie.cppman.actions.CppManAction"-->
+<!--                class="com.github.limoiie.cppman.actions.CppManAction" text="Man Cpp"-->
+<!--                description="Man cppreference page and show in quick documentation view">-->
+<!--            <add-to-group group-id="ToolsMenu" anchor="first"/>-->
+<!--            <keyboard-shortcut keymap="$default" first-keystroke="shift alt M"/>-->
+<!--        </action>-->
+    </actions>
+
 </idea-plugin>
