@@ -2,12 +2,12 @@ package com.github.limoiie.manit.toolwindows
 
 import com.github.limoiie.manit.database.dao.ManSection
 
-const val allSections = "*"
+const val ALL_SECTIONS = "*"
 
-const val defaultTooltip = "Unknown Section"
+const val DEFAULT_TOOLTIP = "Unknown Section"
 
 val manSectionTips = mapOf(
-    allSections to "All Sections",
+    ALL_SECTIONS to "All Sections",
     "1" to "1. Executable programs or shell commands",
     "2" to "2. System calls (functions provided by the kernel)",
     "3" to "3. Library calls (functions within program libraries)",
@@ -23,6 +23,6 @@ val manSectionTips = mapOf(
 
 fun makeManSectionTooltip(manSections: List<ManSection>): List<String> {
     return manSections.map {
-        manSectionTips[it.name]?: defaultTooltip
+        manSectionTips[it.name] ?: DEFAULT_TOOLTIP
     }
 }

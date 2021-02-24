@@ -2,9 +2,12 @@ package com.github.limoiie.manit.database.dsl
 
 import org.jetbrains.exposed.sql.Table
 
+private const val COLUMN_NAME_FILE = "file"
+private const val COLUMN_NAME_SECTION = "section"
+
 object ManFileSections : Table() {
-    val file = reference("file", ManFiles)
-    val section = reference("section", ManSections)
+    val file = reference(COLUMN_NAME_FILE, ManFiles)
+    val section = reference(COLUMN_NAME_SECTION, ManSections)
 
     override val primaryKey = PrimaryKey(file, section)
 }

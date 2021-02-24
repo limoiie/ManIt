@@ -3,9 +3,14 @@ package com.github.limoiie.manit.services.impls
 import java.nio.file.Path
 import java.nio.file.Paths
 
-const val MIN_TITLE_PARTS = 3
+private const val MIN_TITLE_PARTS = 3
+private const val MANPAGE_LINK_PREFIX = ".so"
 
-fun parseManFileEntry(manSourcePath: Path, mainSection: String, manFilePath: Path): ManFileEntry? {
+fun parseManFileEntry(
+    manSourcePath: Path,
+    mainSection: String,
+    manFilePath: Path
+): ManFileEntry? {
     var result: ManFileEntry? = null
     val manFile = manFilePath.toFile()
     if (manFile.isFile && manFile.canRead()) {
@@ -30,8 +35,9 @@ fun parseManFileEntry(manSourcePath: Path, mainSection: String, manFilePath: Pat
                 }
                 return@forEachLine
             }
-            if (line.startsWith(".so")) { // link line
-                val relativePath = Paths.get(line.substring(3).trim())
+            if (line.startsWith(MANPAGE_LINK_PREFIX)) { // link line
+                val relativePath =
+                    Paths.get(line.substring(MANPAGE_LINK_PREFIX.length).trim())
                 result = ManFileEntry(
                     makeKeywords(manFile.nameWithoutExtension, null),
                     makeSections(mainSection, null),

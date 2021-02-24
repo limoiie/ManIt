@@ -3,7 +3,13 @@ package com.github.limoiie.manit.services
 import com.github.limoiie.manit.database.dao.ManSection
 import com.github.limoiie.manit.database.dao.ManSet
 import com.github.limoiie.manit.database.dao.ManSource
-import com.github.limoiie.manit.database.dsl.*
+import com.github.limoiie.manit.database.dsl.ManFileSections
+import com.github.limoiie.manit.database.dsl.ManFiles
+import com.github.limoiie.manit.database.dsl.ManKeywords
+import com.github.limoiie.manit.database.dsl.ManSections
+import com.github.limoiie.manit.database.dsl.ManSetSources
+import com.github.limoiie.manit.database.dsl.ManSets
+import com.github.limoiie.manit.database.dsl.ManSources
 import com.github.limoiie.manit.services.impls.ManFetch
 import com.github.limoiie.manit.services.impls.ManIndex
 import com.intellij.openapi.diagnostic.debug
@@ -128,7 +134,8 @@ class ManDbAppService {
         }
 
         fun keywords(
-            manSet: ManSet, sections: Collection<ManSection>?,
+            manSet: ManSet,
+            sections: Collection<ManSection>?,
             onLoaded: (Collection<String>) -> Unit
         ): Job? {
             jobGetKeywords?.cancel()
@@ -144,7 +151,9 @@ class ManDbAppService {
         }
 
         fun manpage(
-            keyword: String, manSet: ManSet, manSections: Collection<ManSection>?,
+            keyword: String,
+            manSet: ManSet,
+            manSections: Collection<ManSection>?,
             onLoaded: (String?) -> Unit
         ): Job? {
             jobGetManpage?.cancel()
