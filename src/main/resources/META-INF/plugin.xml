@@ -12,7 +12,6 @@
         <projectService serviceImplementation="com.github.limoiie.cppman.services.MyProjectService"/>
         <toolWindow id="Cpp Man" secondary="true" icon="AllIcons.General.Modified" anchor="right"
                     factoryClass="com.github.limoiie.cppman.toolwindows.CppManToolWindowFactory" />
-        <applicationService serviceImplementation="com.github.limoiie.cppman.services.ManAppService"/>
         <applicationService serviceImplementation="com.github.limoiie.cppman.services.ManDbAppService"/>
     </extensions>
 

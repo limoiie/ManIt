@@ -1,9 +1,8 @@
 package com.github.limoiie.cppman.toolwindows
 
 import com.github.limoiie.cppman.database.dao.ManSection
-import com.github.limoiie.cppman.services.ManDbAppService
-import com.github.limoiie.cppman.services.OuterManAppService
 import com.github.limoiie.cppman.database.dao.ManSet
+import com.github.limoiie.cppman.services.ManDbAppService
 import com.github.limoiie.cppman.ui.components.ComboBoxTooltipRender
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
@@ -12,7 +11,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -25,7 +23,7 @@ import java.awt.FlowLayout
 import java.awt.event.ItemEvent
 import javax.swing.JPanel
 
-class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
+class CppManToolWindow(project: Project) {
     private val logger = logger<CppManToolWindow>()
 
     // Ui fields:
@@ -58,6 +56,9 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
             ApplicationManager.getApplication().invokeLater {
                 allManSets.forEach { manSetBox.addItem(it) }
                 allManSections.forEach { manSectionBox.addItem(it) }
+
+                val tooltips = makeManSectionTooltip(allManSections)
+                manSectionBox.renderer = ComboBoxTooltipRender(tooltips)
                 initUi()
             }
         }
@@ -66,7 +67,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
     fun getContent(): JPanel = toolWindowContent
 
     private fun initUi() {
-        logger.debug { "toolWindow: $toolWindow" }
+        logger.debug { "initUi" }
 
         // man config panel
 
@@ -74,9 +75,6 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
             logger.debug { "Man changed: $it" }
             if (it.stateChange == ItemEvent.SELECTED) {
                 loadManCandidates()
-//                val item = it.item as ManEntry
-//                manSectionBox.isVisible =
-//                    item.type != ManType.CppMan
             }
         }
 
@@ -85,10 +83,6 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
         manSetBox.selectedIndex = 0 // set default man
         manSetBox.toolTipText = "Man executable"
 
-        val tooltips = OuterManAppService.manSections.values.toList()
-        val render = ComboBoxTooltipRender(tooltips)
-
-        manSectionBox.renderer = render
         manSectionBox.addItemListener(actionUpdateConfigPanel)
         manSectionBox.selectedIndex = 0 // set default man
         manSectionBox.toolTipText = "Man section"
@@ -115,7 +109,6 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
                     }
                 }
             }
-//            service<OuterManAppService>().man(valueTxt.text, man.type, manSection)
         }
 
         // top panel = man config panel + man word panel
@@ -157,6 +150,7 @@ class CppManToolWindow(project: Project, private val toolWindow: ToolWindow) {
 
     private fun loadManCandidates() {
         logger.debug { "load candidates for $man" }
+
         service<ManDbAppService>().addOnIndexedListener {
             keywords(listOf(manSection), man) {
                 valueTxt.setAutoCompletionItems(it)

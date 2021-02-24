@@ -6,6 +6,7 @@ import com.github.limoiie.cppman.database.dao.ManSource
 import com.github.limoiie.cppman.database.dsl.*
 import com.github.limoiie.cppman.services.impls.ManFetch
 import com.github.limoiie.cppman.services.impls.ManIndex
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -56,9 +57,12 @@ class ManDbAppService {
             indexingJob = GlobalScope.launch {
                 try {
                     if (!isIndexed.get()) {
+                        logger.debug { "Has not been indexed yet, indexing now..." }
                         transaction {
                             ManIndex.indexSources(manSourcePaths())
                         }
+                    } else {
+                        logger.debug { "Already indexed." }
                     }
                     notifyIndexed()
                     isIndexed.set(true)
