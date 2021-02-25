@@ -56,6 +56,8 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
     }
     implementation("org.xerial:sqlite-jdbc:$sqliteJDBCVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 // Configure gradle-intellij-plugin plugin.
@@ -87,6 +89,13 @@ detekt {
         html.enabled = false
         xml.enabled = false
         txt.enabled = false
+    }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
     }
 }
 

@@ -10,7 +10,9 @@ import com.github.limoiie.manit.database.dsl.ManSections
 import com.github.limoiie.manit.database.dsl.ManSetSources
 import com.github.limoiie.manit.database.dsl.ManSets
 import com.github.limoiie.manit.database.dsl.ManSources
+import com.github.limoiie.manit.mantool.renders.DefaultLineRender
 import com.github.limoiie.manit.mantool.renders.DefaultManpageRender
+import com.github.limoiie.manit.mantool.renders.DefaultSectionRender
 import com.github.limoiie.manit.services.impls.ManFetch
 import com.github.limoiie.manit.services.impls.ManIndex
 import com.github.limoiie.manit.services.impls.ManPageRawLoader
@@ -127,7 +129,9 @@ class ManDbAppService {
         private var jobGetKeywords: Job? = null
         private var jobGetManpage: Job? = null
 
-        private val render = DefaultManpageRender()
+        private val render = DefaultManpageRender(
+            DefaultSectionRender(DefaultLineRender())
+        )
 
         init {
             transaction {
@@ -170,7 +174,7 @@ class ManDbAppService {
                 if (manFile != null) {
                     val rawPage = ManPageRawLoader.loadManPage(manFile.path)
                     val renderedPage = render.render(rawPage)
-                    onLoaded(renderedPage)
+                    onLoaded(manFile.path + renderedPage)
                 }
             }
             return jobGetManpage

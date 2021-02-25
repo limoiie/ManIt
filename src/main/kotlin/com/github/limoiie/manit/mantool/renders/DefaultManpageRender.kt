@@ -1,28 +1,43 @@
 package com.github.limoiie.manit.mantool.renders
 
-import com.intellij.lang.documentation.DocumentationMarkup.*
+const val LINE_END = "\n"
+const val LINE_JOINT = " "
 
-class DefaultManpageRender {
+class DefaultManpageRender(private val sectionRender: SectionRender) {
+
     fun render(manpage: String): String {
-        return "rendered $manpage"
+        val sections = manpage.lineSequence().splitSections()
+        return sectionRender.firstRender() + renderSections(sections) +
+                sectionRender.lastRender()
     }
 
-    private fun document(): String {
-        return DEFINITION_START + "val string: String?" + DEFINITION_END + "\n" +
-                CONTENT_START + "main description" + CONTENT_END + "\n" +
-                SECTIONS_START + "\n" +
-                createSection(1) +
-                createSection(2) +
-                createSection(3) +
-                SECTIONS_END
+    private fun Sequence<String>.splitSections(): Map<String?, List<String>> {
+        var sectionName: String? = null
+        return filterNot { it.isCommentLine() }
+            .map { line ->
+                if (line.isSectionHeaderLine()) {
+                    sectionName = ManPageParser.parseHeaderFields(line).getOrNull(1)
+                }
+                sectionName to line
+            }
+            .groupBy({ it.first }) { it.second }
     }
 
-    private fun createSection(no: Int): String {
-        return SECTION_HEADER_START + "Section Name - $no" + "\n" +
-                SECTION_SEPARATOR + "<p> Content - $no: reset the scrollBar of " +
-                "manPageLayout after update the text call invokeLater in other " +
-                "thread rather than the ui one, so that the manPageLayout could " +
-                "be updated before resetting its ScrollBar" +
-                SECTION_END
+    private fun renderSections(sections: Map<String?, List<String>>): String {
+        return sections.map { sectionRender.render(it.key, it.value) }
+            .joinToString(LINE_END)
     }
+
+    // string line helpers
+
+    private fun String.isSectionHeaderLine(): Boolean {
+        return startsWith(ManPageTag.SECTION_START) ||
+                startsWith(ManPageTag.SUB_SECTION_START)
+    }
+
+    private fun String.isCommentLine(): Boolean {
+        return startsWith(ManPageTag.COMMENT_START)
+    }
+
+    // process states
 }
