@@ -90,7 +90,7 @@ class AppSettingsComponent {
     private fun onManSetTableItemSelected(e: ListSelectionEvent) {
         if (e.valueIsAdjusting) return
         manSourceTableModel.bindManSet(
-            manSetTableModel.getRawData(e.firstIndex)
+            manSetTableModel.getData(manSetTable.selectedRow)
         )
     }
 

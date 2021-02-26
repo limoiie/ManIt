@@ -14,33 +14,13 @@ class ManSetTableModel : DbTableModel<ManSet>() {
         return "Man Sets"
     }
 
-    override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
-        return rawData[rowIndex].name
-    }
-
     override fun fetchData(manDbService: ManDbAppService.ManDbService): List<ManSet> {
         return manDbService.allManSets
     }
 
-    override fun rowViewData(item: ManSet): MutableList<Any?> {
+    override fun rowViewData(item: ManSet?): MutableList<Any?> {
         return mutableListOf(
-            item.name
+            item?.name ?: "Unknown"
         )
-    }
-
-    override fun removeRow(idx: Int) {
-        TODO("Not yet implemented")
-    }
-
-    override fun addRow() {
-        TODO("Not yet implemented")
-    }
-
-    override fun exchangeRows(oldIndex: Int, newIndex: Int) {
-        TODO("Not yet implemented")
-    }
-
-    override fun canExchangeRows(oldIndex: Int, newIndex: Int): Boolean {
-        return false
     }
 }
