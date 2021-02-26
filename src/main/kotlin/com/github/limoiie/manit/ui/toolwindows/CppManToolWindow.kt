@@ -1,4 +1,4 @@
-package com.github.limoiie.manit.toolwindows
+package com.github.limoiie.manit.ui.toolwindows
 
 import com.github.limoiie.manit.database.dao.ManSection
 import com.github.limoiie.manit.database.dao.ManSet

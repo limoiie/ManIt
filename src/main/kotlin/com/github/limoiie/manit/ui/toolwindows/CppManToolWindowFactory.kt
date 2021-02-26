@@ -1,4 +1,4 @@
-package com.github.limoiie.manit.toolwindows
+package com.github.limoiie.manit.ui.toolwindows
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware

@@ -11,8 +11,13 @@
         <applicationService serviceImplementation="com.github.limoiie.manit.services.OuterManAppService"/>
         <projectService serviceImplementation="com.github.limoiie.manit.services.MyProjectService"/>
         <toolWindow id="Cpp Man" secondary="true" icon="AllIcons.General.Modified" anchor="right"
-                    factoryClass="com.github.limoiie.manit.toolwindows.CppManToolWindowFactory" />
+                    factoryClass="com.github.limoiie.manit.ui.toolwindows.CppManToolWindowFactory" />
         <applicationService serviceImplementation="com.github.limoiie.manit.services.ManDbAppService"/>
+        <applicationConfigurable parentId="tools"
+                                 instance="com.github.limoiie.manit.ui.config.AppSettingsConfigurable"
+                                 id="org.company.ApplicationSettingsConfigurable"
+                                 displayName="Man It"/>
+        <applicationService serviceImplementation="com.github.limoiie.manit.ui.config.AppSettingsState"/>
     </extensions>
 
     <applicationListeners>

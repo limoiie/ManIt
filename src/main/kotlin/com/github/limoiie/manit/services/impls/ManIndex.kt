@@ -17,7 +17,7 @@ import java.nio.file.Path
 
 object ManIndex {
     private const val manPrefix = "man"
-    private const val nameOfAllManSet = "All"
+    const val nameOfAllManSet = "All"
     private val logger = logger<ManIndex>()
 
     /**

@@ -124,7 +124,8 @@ class ManDbAppService {
         var allManSets: List<ManSet> = listOf()
             private set
 
-        private var allManSources: List<ManSource> = listOf()
+        var allManSources: List<ManSource> = listOf()
+            private set
 
         private var jobGetKeywords: Job? = null
         private var jobGetManpage: Job? = null

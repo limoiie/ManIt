@@ -4,8 +4,8 @@ import com.github.limoiie.manit.MyBundle
 import com.github.limoiie.manit.mantool.CppMan
 import com.github.limoiie.manit.mantool.Man
 import com.github.limoiie.manit.mantool.MyMan
-import com.github.limoiie.manit.toolwindows.CppManToolWindowFactory
-import com.github.limoiie.manit.toolwindows.manSectionTips
+import com.github.limoiie.manit.ui.toolwindows.CppManToolWindowFactory
+import com.github.limoiie.manit.ui.toolwindows.manSectionTips
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
