@@ -1,11 +1,15 @@
 package com.github.limoiie.manit.ui.config
 
+import com.github.limoiie.manit.ui.config.tablemodels.ManSetTableModel
+import com.github.limoiie.manit.ui.config.tablemodels.ManSourceTableModel
 import com.intellij.openapi.options.Configurable
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 class AppSettingsConfigurable : Configurable {
     private var mySettingsComponent: AppSettingsComponent? = null
+    private var manSetTableModel: ManSetTableModel? = null
+    private var manSourceTableModel: ManSourceTableModel? = null
 
     // A default constructor with no arguments is required because this implementation
     // is registered as an applicationConfigurable EP
@@ -22,16 +26,16 @@ class AppSettingsConfigurable : Configurable {
     }
 
     override fun createComponent(): JComponent? {
-        mySettingsComponent = AppSettingsComponent()
+        manSetTableModel = ManSetTableModel()
+        manSourceTableModel = ManSourceTableModel()
+        mySettingsComponent = AppSettingsComponent(
+            manSetTableModel!!, manSourceTableModel!!
+        )
         return mySettingsComponent!!.getPanel()
     }
 
     override fun isModified(): Boolean {
-        val settings: AppSettingsState = AppSettingsState.instance()
-        var modified = mySettingsComponent!!.getUserNameText() != settings.userId
-        modified =
-            modified or (mySettingsComponent!!.getIdeaUserStatus() != settings.ideaStatus)
-        return modified
+        return manSetTableModel!!.isModified() || manSourceTableModel!!.isModified()
     }
 
     override fun apply() {

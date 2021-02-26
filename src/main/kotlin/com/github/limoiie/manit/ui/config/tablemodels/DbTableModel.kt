@@ -24,6 +24,12 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
 
     private val removedData: MutableList<DataWrapper<T>> = mutableListOf()
 
+    protected open val ignoredIndexes: Set<Int> = setOf()
+
+    protected abstract fun fetchData(manDbService: ManDbAppService.ManDbService): List<T>
+
+    protected abstract fun rowViewData(item: T?): MutableList<Any?>
+
     protected fun loadData() {
         val rawDataList = runBlocking {
             val channel = Channel<List<T>>()
@@ -37,17 +43,23 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
         }
 
         data = rawDataList
-            .map { DataWrapper(it, rowViewData(it)) }
+            .map { DataWrapper(it, rowViewData(it), ignoredIndexes) }
             .toMutableList()
     }
 
-    fun getData(raw: Int): DataWrapper<T> {
-        return data[raw]
+    fun getData(raw: Int): DataWrapper<T> = data[raw]
+
+    open fun isModified(): Boolean {
+        return removedData.isNotEmpty() || // deleted
+                data.any {
+                    it.rawData == null || // inserted
+                            it.isModified() // updated
+                }
     }
 
-    override fun getRowCount(): Int {
-        return data.size
-    }
+    // override [TableModel]'s member functions
+
+    override fun getRowCount(): Int = data.size
 
     override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
         data[rowIndex].viewData[columnIndex] = aValue
@@ -57,27 +69,45 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
         return data[rowIndex].viewData[columnIndex]
     }
 
-    override fun addRow() {
-        data.add(DataWrapper(null, rowViewData(null)))
-    }
+    override fun isCellEditable(rowIndex: Int, columnIndex: Int): Boolean = true
+
+    // override [ItemRemovable]
 
     override fun removeRow(idx: Int) {
-        removedData.add(data.removeAt(idx))
+        val row = data.removeAt(idx)
+        if (row.rawData != null) {
+            removedData.add(row)
+        }
+        fireTableRowsDeleted(idx, idx)
+    }
+
+    // override [EditableModel]'s member functions
+
+    override fun addRow() {
+        data.add(DataWrapper(null, rowViewData(null), ignoredIndexes))
+        fireTableRowsInserted(data.lastIndex, data.lastIndex)
     }
 
     override fun exchangeRows(oldIndex: Int, newIndex: Int) {
         val old = data[oldIndex]
         data[oldIndex] = data[newIndex]
         data[newIndex] = old
+        fireTableRowsUpdated(oldIndex, oldIndex)
+        fireTableRowsUpdated(newIndex, newIndex)
     }
 
-    override fun canExchangeRows(oldIndex: Int, newIndex: Int): Boolean {
-        return true
+    override fun canExchangeRows(oldIndex: Int, newIndex: Int): Boolean = true
+
+    class DataWrapper<T>(
+        val rawData: T?,
+        val viewData: MutableList<Any?>,
+        private val ignoredIndexes: Set<Int>
+    ) {
+        private val initViewData = viewData.toList()
+
+        fun isModified() = initViewData.size != viewData.size ||
+            initViewData.zip(viewData)
+            .filterIndexed { i, _ -> i !in ignoredIndexes }
+            .any { (l, r) -> l != r }
     }
-
-    protected abstract fun fetchData(manDbService: ManDbAppService.ManDbService): List<T>
-
-    protected abstract fun rowViewData(item: T?): MutableList<Any?>
-
-    class DataWrapper<T>(val rawData: T?, val viewData: MutableList<Any?>)
 }

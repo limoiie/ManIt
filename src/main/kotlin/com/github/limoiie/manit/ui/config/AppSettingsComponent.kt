@@ -2,6 +2,7 @@ package com.github.limoiie.manit.ui.config
 
 import com.github.limoiie.manit.ui.config.tablemodels.ManSetTableModel
 import com.github.limoiie.manit.ui.config.tablemodels.ManSourceTableModel
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.BooleanTableCellRenderer
@@ -15,9 +16,12 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTable
-import javax.swing.event.ListSelectionEvent
+import javax.swing.event.TableModelEvent
 
-class AppSettingsComponent {
+class AppSettingsComponent(
+    private val manSetTableModel: ManSetTableModel,
+    private val manSourceTableModel: ManSourceTableModel
+) {
     private val logger = logger<AppSettingsComponent>()
 
     private var myMainPanel: JPanel? = null
@@ -25,9 +29,6 @@ class AppSettingsComponent {
     private val myIdeaUserStatus = JBCheckBox("Do you use IntelliJ IDEA? ")
 
     private val containerPanel = JPanel(BorderLayout(fragmentHGap, 0))
-
-    private val manSetTableModel = ManSetTableModel()
-    private val manSourceTableModel = ManSourceTableModel()
 
     private val manSetTable = JBTable(manSetTableModel)
     private val manSourceTable = JBTable(manSourceTableModel)
@@ -42,8 +43,21 @@ class AppSettingsComponent {
         logger.debug { "open setting" }
 
         manSetTable.selectionModel.addListSelectionListener {
-            onManSetTableItemSelected(it)
+            if (it.valueIsAdjusting) return@addListSelectionListener
+            manSourceTableModel.switchTo(
+                if (manSetTable.selectedRow < 0) null else {
+                    manSetTableModel.getData(manSetTable.selectedRow)
+                }
+            )
         }
+        manSourceTableModel.addTableModelListener {
+            if (it.type == TableModelEvent.INSERT) {
+                ApplicationManager.getApplication().invokeLater {
+                    manSourceTable.editCellAt(it.firstRow, 1)
+                }
+            }
+        }
+        manSourceTable.setShowColumns(false)
 
         val leftFrame = createTableView(manSetTable)
         val mainFrame = createTableView(manSourceTable)
@@ -85,13 +99,6 @@ class AppSettingsComponent {
 
     fun setIdeaUserStatus(newStatus: Boolean) {
         myIdeaUserStatus.isSelected = newStatus
-    }
-
-    private fun onManSetTableItemSelected(e: ListSelectionEvent) {
-        if (e.valueIsAdjusting) return
-        manSourceTableModel.bindManSet(
-            manSetTableModel.getData(manSetTable.selectedRow)
-        )
     }
 
     private fun createTableView(table: JTable): JPanel {

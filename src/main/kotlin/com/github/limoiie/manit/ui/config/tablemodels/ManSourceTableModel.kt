@@ -2,81 +2,101 @@ package com.github.limoiie.manit.ui.config.tablemodels
 
 import com.github.limoiie.manit.database.dao.ManSet
 import com.github.limoiie.manit.database.dao.ManSource
-import com.github.limoiie.manit.services.ManDbAppService
-import com.github.limoiie.manit.services.impls.ManIndex
+import com.github.limoiie.manit.services.ManDbAppService.ManDbService
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class ManSourceTableModel : DbTableModel<ManSource>() {
 
-    private var manSet: DataWrapper<ManSet>? = null
+    private var currManSet: DataWrapper<ManSet>? = null
 
     private var manSets: MutableMap<DataWrapper<ManSet>, PageState> = mutableMapOf()
-
-    private var selectedSources: List<ManSource> = listOf()
 
     init {
         loadData()
     }
 
-    override fun getColumnCount(): Int = 2
+    fun switchTo(newManSet: DataWrapper<ManSet>?) {
+        if (newManSet == currManSet) return
 
-    override fun isCellEditable(rowIndex: Int, columnIndex: Int): Boolean {
-        return manSet?.rawData?.name != ManIndex.nameOfAllManSet
-    }
-
-    override fun fetchData(manDbService: ManDbAppService.ManDbService): List<ManSource> {
-        return manDbService.allManSources
-    }
-
-    override fun rowViewData(item: ManSource?): MutableList<Any?> {
-        return if (item != null) {
-            mutableListOf(
-                item.id in selectedSources.map(ManSource::id),
-                item.path
-            )
-        } else {
-            mutableListOf(false, "")
-        }
-    }
-
-    fun bindManSet(newManSet: DataWrapper<ManSet>) {
-        if (newManSet == manSet) return
-
-        if (newManSet !in manSets) {
+        if (newManSet != null && newManSet !in manSets) {
             manSets[newManSet] =
                 if (newManSet.rawData == null) {
-                    PageState(List(data.size) { false })
+                    PageState()
                 } else {
-                    val selectedSources = transaction {
-                        newManSet.rawData.sources.map(ManSource::id)
+                    val selected = transaction {
+                        newManSet.rawData.sources.map(ManSource::id).toSet()
                     }
-                    PageState(data.map { it.rawData?.id in selectedSources })
+                    PageState(
+                        data.filter { it.rawData?.id in selected }.toMutableSet()
+                    )
                 }
         }
 
-        savePageStateFromView()
-        manSet = newManSet
-        loadPageStateToView()
+        currManSet = newManSet
 
         fireTableDataChanged()
     }
 
-    private fun savePageStateFromView() {
-        if (manSet != null) {
-            manSets[manSet!!] = PageState(data.map { it.viewData[0] as Boolean })
+    // override [TableModel]
+
+    override fun getRowCount(): Int {
+        return if (currManSet == null) 0 else {
+            super.getRowCount()
         }
     }
 
-    private fun loadPageStateToView() {
-        if (manSet != null) {
-            val st = manSets[manSet!!]
-            if (st != null) {
-                data.forEachIndexed { i, it ->
-                    it.viewData[0] = st.selected[i]
-                }
-            }
+    override fun getColumnCount(): Int = 2
+
+    // override [AbstractTableModel]
+
+    override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
+        if (columnIndex != 0) super.setValueAt(aValue, rowIndex, columnIndex - 1)
+        else {
+            manSets[currManSet]!!.selected.op(data[rowIndex], aValue as Boolean)
         }
     }
 
-    private class PageState(val selected: List<Boolean>)
+    override fun getValueAt(rowIndex: Int, columnIndex: Int): Any? {
+        return if (columnIndex != 0) super.getValueAt(rowIndex, columnIndex - 1)
+        else {
+            data[rowIndex] in manSets[currManSet]!!.selected
+        }
+    }
+
+    // override [ItemRemovable]
+
+    override fun removeRow(idx: Int) {
+        manSets.values.forEach {
+            it.selected.remove(data[idx])
+        }
+        super.removeRow(idx)
+    }
+
+    // override [DbTableModel]
+
+    override fun fetchData(manDbService: ManDbService) = manDbService.allManSources
+
+    override fun rowViewData(item: ManSource?): MutableList<Any?> {
+        return mutableListOf(item?.path ?: "")
+    }
+
+    override fun isModified(): Boolean {
+        return super.isModified() || manSets.any { it.value.isModified() }
+    }
+
+    private class PageState(
+        val selected: MutableSet<DataWrapper<ManSource>> = mutableSetOf()
+    ) {
+        private val initSelected = selected.toSet()
+
+        fun isModified() = initSelected.size != selected.size ||
+                !initSelected.containsAll(selected)
+    }
+
+    private fun MutableSet<DataWrapper<ManSource>>.op(
+        element: DataWrapper<ManSource>,
+        addOrRemove: Boolean
+    ) {
+        if (addOrRemove) add(element) else remove(element)
+    }
 }
