@@ -37,8 +37,8 @@ class CppManToolWindow(private val project: Project) {
 
     // State fields:
 
-    private val manSet get() = manSetBox.selectedItem as ManSet
-    private val manSection get() = manSectionBox.selectedItem as ManSection
+    private val manSet get() = manSetBox.selectedItem as ManSet?
+    private val manSection get() = manSectionBox.selectedItem as ManSection?
 
     companion object {
         const val maxExeBoxWidth = 96
@@ -46,14 +46,13 @@ class CppManToolWindow(private val project: Project) {
     }
 
     init {
-        service<ManDbAppService>().addOnIndexedListener {
-            ApplicationManager.getApplication().invokeLater {
-                allManSets.forEach { manSetBox.addItem(it) }
-                allManSections.forEach { manSectionBox.addItem(it) }
+        initUi()
 
-                val tooltips = makeManSectionTooltip(allManSections)
-                manSectionBox.renderer = ComboBoxTooltipRender(tooltips)
-                initUi()
+        service<ManDbAppService>().whenReady {
+            ApplicationManager.getApplication().invokeLater {
+                manSetBox.removeAllItems()
+                allManSets.forEach { manSetBox.addItem(it) }
+
             }
         }
     }
@@ -65,20 +64,14 @@ class CppManToolWindow(private val project: Project) {
 
         // man config panel
 
-        val actionUpdateConfigPanel = { it: ItemEvent ->
-            logger.debug { "Man changed: $it" }
-            if (it.stateChange == ItemEvent.SELECTED) {
-                loadManCandidates()
-            }
+        manSetBox.addItemListener {
+            if (it.stateChange == ItemEvent.SELECTED) loadSections()
         }
-
-        manSetBox.selectedItem = null
-        manSetBox.addItemListener(actionUpdateConfigPanel)
-        manSetBox.selectedIndex = 0 // set default man
         manSetBox.toolTipText = "Man executable"
 
-        manSectionBox.addItemListener(actionUpdateConfigPanel)
-        manSectionBox.selectedIndex = 0 // set default man
+        manSectionBox.addItemListener {
+            if (it.stateChange == ItemEvent.SELECTED) loadManCandidates()
+        }
         manSectionBox.toolTipText = "Man section"
 
         manSetBox.setMinimumAndPreferredWidth(maxExeBoxWidth)
@@ -93,17 +86,7 @@ class CppManToolWindow(private val project: Project) {
         valueTxt.childComponent.toolTipText = "The value to man with"
         valueTxt.childComponent.setPlaceholder("std::*")
         valueTxt.setButtonIcon(AllIcons.Actions.Refresh)
-        valueTxt.addActionListener {
-            // todo - load manpage
-            service<ManDbAppService>().addOnIndexedListener {
-                val keyword = valueTxt.text
-                manpage(keyword, manSet, selectedSections()) {
-                    ApplicationManager.getApplication().invokeLater {
-                        showManPage(keyword, it)
-                    }
-                }
-            }
-        }
+        valueTxt.addActionListener { loadManPage() }
 
         // top panel = man config panel + man word panel
 
@@ -123,11 +106,50 @@ class CppManToolWindow(private val project: Project) {
     }
 
     private fun loadManCandidates() {
-        logger.debug { "load candidates for $manSet" }
+        logger.debug { "loadManCandidates" }
 
-        service<ManDbAppService>().addOnIndexedListener {
-            keywords(manSet, selectedSections()) {
-                valueTxt.setAutoCompletionItems(it)
+        val manSet = manSet
+        val selectedSection = manSection
+        if (manSet != null && selectedSection != null) {
+            service<ManDbAppService>().whenReady {
+                keywords(manSet, listOf(selectedSection)) {
+                    valueTxt.setAutoCompletionItems(it)
+                }
+            }
+        }
+    }
+
+    private fun loadSections() {
+        logger.debug { "loadSections" }
+
+        val manSet = manSet
+        if (manSet != null) {
+            service<ManDbAppService>().whenReady {
+                val sections = sections(manSet)
+                ApplicationManager.getApplication().invokeLater {
+                    manSectionBox.removeAllItems()
+                    sections.forEach { manSectionBox.addItem(it) }
+
+                    val tooltips = makeManSectionTooltip(sections)
+                    manSectionBox.renderer = ComboBoxTooltipRender(tooltips)
+                }
+            }
+        }
+    }
+
+    private fun loadManPage() {
+        logger.debug { "loadManPage" }
+
+        val manSet = manSet
+        val selectedSection = manSection
+        if (manSet != null && selectedSection != null) {
+            service<ManDbAppService>().whenReady {
+                val keyword = valueTxt.text
+                manpage(keyword, manSet, listOf(selectedSection)) {
+                    ApplicationManager.getApplication().invokeLater {
+                        showManPage(keyword, it)
+                    }
+                }
             }
         }
     }
@@ -151,7 +173,4 @@ class CppManToolWindow(private val project: Project) {
         }
     }
 
-    private fun selectedSections(): List<ManSection> {
-        return listOf(manSection) // todo - check and expand all-section
-    }
 }

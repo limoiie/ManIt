@@ -17,7 +17,7 @@
                                  instance="com.github.limoiie.manit.ui.config.AppSettingsConfigurable"
                                  id="org.company.ApplicationSettingsConfigurable"
                                  displayName="Man It"/>
-        <applicationService serviceImplementation="com.github.limoiie.manit.ui.config.AppSettingsState"/>
+        <applicationService serviceImplementation="com.github.limoiie.manit.services.ManConfigAppService"/>
     </extensions>
 
     <applicationListeners>

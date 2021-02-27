@@ -58,4 +58,19 @@ object ManFetch {
 
         return ManFile.findById(manFileId)
     }
+
+    fun getSections(manSet: ManSet): List<ManSection> {
+        val manSources = manSet.sources.map(ManSource::id)
+
+        return ManFiles
+            .leftJoin(ManFileSections, { id }, { file })
+            .slice(ManFileSections.section)
+            .select {
+                ManFiles.manSource inList manSources
+            }
+            .mapNotNull { it[ManFileSections.section] }
+            .mapNotNull { ManSection.findById(it) }
+            .toSet()
+            .toList()
+    }
 }

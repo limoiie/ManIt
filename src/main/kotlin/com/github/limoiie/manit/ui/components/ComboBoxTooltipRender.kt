@@ -17,7 +17,7 @@ class ComboBoxTooltipRender(private val tooltips: List<String>) : DefaultListCel
             list, value, index, isSelected, cellHasFocus
         ) as JComponent
 
-        if (-1 < index && null != value) {
+        if (-1 < index && index < tooltips.size && null != value) {
             comp.toolTipText = tooltips[index]
         }
         return comp

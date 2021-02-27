@@ -20,13 +20,16 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
 
 class ManDbAppService {
     private val logger = logger<ManDbAppService>()
@@ -37,57 +40,73 @@ class ManDbAppService {
 
     private var service: ManDbService? = null
 
-    private var indexingJob: Job? = null
-    private val onIndexedListeners: MutableList<ManDbService.() -> Unit> = mutableListOf()
+    private val indexing = AtomicBoolean(false)
+    private val indexLock = ReentrantReadWriteLock()
 
-    private val isIndexing = AtomicBoolean(false)
-    private val isIndexed = AtomicBoolean(false)
+    private var indexingJob: Job? = null
+    private val onUpdatedListeners: MutableList<ManDbService.() -> Unit> = mutableListOf()
 
     init {
         Database.connect(databaseUri, databaseDriver)
         transaction {
             prepareSchema()
-            isIndexed.set(ManIndex.isIndexed())
         }
         indexManRepo()
     }
 
-    fun addOnIndexedListener(listener: ManDbService.() -> Unit) {
-        synchronized(onIndexedListeners) {
-            onIndexedListeners.add(listener)
-            if (isIndexed.get() && !isIndexing.get()) {
-                service!!.listener()
-            }
-        }
-    }
-
-    private fun indexManRepo() {
-        if (!isIndexing.compareAndExchange(false, true)) {
-            indexingJob?.cancel()
-            indexingJob = GlobalScope.launch {
-                try {
-                    if (!isIndexed.get()) {
-                        logger.debug { "Has not been indexed yet, indexing now..." }
-                        transaction {
-                            ManIndex.indexSources(manSourcePaths())
-                        }
-                    } else {
-                        logger.debug { "Already indexed." }
-                    }
-                    notifyIndexed()
-                    isIndexed.set(true)
-                } finally {
-                    isIndexing.set(false)
+    fun indexManRepo() {
+        if (indexLock.isWriteLocked) return
+        indexing.set(true)
+        indexingJob = GlobalScope.launch {
+            logger.debug { "Start indexing ManRepo" }
+            indexLock.writeLock().withLock {
+                logger.debug { "write lock" }
+                transaction {
+                    ManIndex.indexSources()
                 }
             }
+            logger.debug { "write unlock" }
+            fireUpdated()
+            indexing.set(false)
         }
     }
 
-    private fun notifyIndexed() {
-        service = ManDbService()
-        synchronized(onIndexedListeners) {
-            for (listener in onIndexedListeners) {
-                service?.listener()
+    fun addOnDbUpdatedListener(listener: ManDbService.() -> Unit) {
+        synchronized(onUpdatedListeners) {
+            onUpdatedListeners.add(listener)
+        }
+    }
+
+    fun <R> untilReady(action: ManDbService.() -> R): R = runBlocking {
+        while (indexing.get()) delay(200)
+        logger.debug { "try read lock - until" }
+        indexLock.readLock().withLock {
+            logger.debug { "read locked - until" }
+            service!!.action()
+        }
+    }
+
+    fun whenReady(action: ManDbService.() -> Unit): Job {
+        return GlobalScope.launch {
+            logger.debug { "try read lock - when ${Thread.currentThread()}" }
+            while (indexing.get()) delay(200)
+            indexLock.readLock().withLock {
+                logger.debug { "read locked - when ${Thread.currentThread()}" }
+                if (isActive) {
+                    logger.debug { "before action - when ${Thread.currentThread()}" }
+                    service!!.action()
+                    logger.debug { "after action - when ${Thread.currentThread()}" }
+                }
+                logger.debug { "read unlock - when ${Thread.currentThread()}" }
+            }
+        }
+    }
+
+    private fun fireUpdated() {
+        service = ManDbService(this)
+        synchronized(onUpdatedListeners) {
+            for (listener in onUpdatedListeners) {
+                service!!.listener()
             }
         }
     }
@@ -102,22 +121,7 @@ class ManDbAppService {
         SchemaUtils.create(ManSetSources)
     }
 
-    // todo - get by manpath or something else
-    private fun manSourcePaths(): List<Path> {
-        return listOf(
-            "/Users/ligengwang/.opam/4.07.0/man",
-            "/Users/ligengwang/.nvm/versions/node/v13.10.1/share/man",
-            "/Users/ligengwang/anaconda3/share/man",
-            "/usr/local/share/man",
-            "/usr/share/man",
-            "/Library/TeX/texbin/man",
-            "/opt/X11/share/man",
-            "/Library/Apple/usr/share/man",
-            "/Library/Developer/CommandLineTools/usr/share/man",
-        ).map { Paths.get(it) }
-    }
-
-    class ManDbService {
+    class ManDbService(private val service: ManDbAppService) {
         var allManSections: List<ManSection> = listOf()
             private set
 
@@ -179,6 +183,29 @@ class ManDbAppService {
                 }
             }
             return jobGetManpage
+        }
+
+        fun sections(manSet: ManSet): List<ManSection> {
+            return transaction {
+                ManFetch.getSections(manSet)
+            }
+        }
+
+        fun doUpdate(statements: () -> Unit) {
+            transaction {
+                statements()
+            }
+            fireDbUpdated()
+        }
+
+        fun doFind(statements: () -> Unit) {
+            transaction {
+                statements()
+            }
+        }
+
+        private fun fireDbUpdated() {
+            service.fireUpdated()
         }
     }
 }

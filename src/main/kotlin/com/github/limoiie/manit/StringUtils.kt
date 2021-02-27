@@ -22,3 +22,19 @@ fun String.runCommand(workingDir: File? = null): String? {
         null
     }
 }
+
+fun List<String>.runCommand(workingDir: File? = null): String? {
+    return try {
+        val proc = ProcessBuilder(this)
+            .directory(workingDir)
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .redirectError(ProcessBuilder.Redirect.PIPE)
+            .start()
+
+        proc.waitFor(PROCESS_TIMEOUT, TimeUnit.SECONDS)
+        proc.inputStream.bufferedReader().readText()
+    } catch (e: IOException) {
+        e.printStackTrace()
+        null
+    }
+}

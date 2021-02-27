@@ -1,7 +1,9 @@
 package com.github.limoiie.manit.ui.config
 
+import com.github.limoiie.manit.services.ManDbAppService
 import com.github.limoiie.manit.ui.config.tablemodels.ManSetTableModel
 import com.github.limoiie.manit.ui.config.tablemodels.ManSourceTableModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -39,15 +41,18 @@ class AppSettingsConfigurable : Configurable {
     }
 
     override fun apply() {
-        val settings: AppSettingsState = AppSettingsState.instance()
-        settings.userId = mySettingsComponent!!.getUserNameText()
-        settings.ideaStatus = mySettingsComponent!!.getIdeaUserStatus()
+        service<ManDbAppService>().untilReady {
+            doUpdate {
+                manSetTableModel!!.applyToDb()
+                manSourceTableModel!!.applyToDb()
+            }
+        }
+
+        manSourceTableModel?.switchTo(null)
+        service<ManDbAppService>().indexManRepo()
     }
 
     override fun reset() {
-        val settings: AppSettingsState = AppSettingsState.instance()
-        mySettingsComponent!!.setUserNameText(settings.userId)
-        mySettingsComponent!!.setIdeaUserStatus(settings.ideaStatus)
     }
 
     override fun disposeUIResources() {

@@ -14,20 +14,25 @@ import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.exposed.sql.insert
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 
 object ManIndex {
     private const val manPrefix = "man"
-    const val nameOfAllManSet = "All"
+    private const val nameOfAllManSet = "All"
     private val logger = logger<ManIndex>()
 
     /**
-     * Index each man source in [manSourcePaths] sequentially.
+     * Index man source which has not been indexed in sequentially.
      *
      * A man source is a directory which contains sub directories like 'man1', 'man2', etc.
      */
-    fun indexSources(manSourcePaths: List<Path>) {
-        manSourcePaths.forEach(ManIndex::indexOneSource)
-        addDefaultManSet()
+    fun indexSources() {
+        initDbIfEmpty()
+
+        ManSource.all()
+            .filterNot(ManSource::indexed)
+            .forEach(ManIndex::indexOneSource)
+
         logger.debug {
             val c = ManFile.count()
             "ManFile Count: $c"
@@ -35,41 +40,69 @@ object ManIndex {
     }
 
     /**
-     * Return true if the table [ManSource] is not empty.
-     *
-     * Fixme - record this information in a better way
+     * Initialize the database with default values.
+     * - if table [ManSource] is empty, initialize with the man sources from 'manpath'
+     * - if table [ManSet] is empty, add a set named 'All' which contains all the sources.
      */
-    fun isIndexed(): Boolean {
-        return ManSource.count() > 0
-    }
-
-    private fun addDefaultManSet() {
-        val set = ManSet.new {
-            name = nameOfAllManSet
+    private fun initDbIfEmpty() {
+        if (ManSource.count() == 0L) {
+            logger.debug { "Table ManSource is empty, init it" }
+            for (manSourcePath in manSourcePaths()) {
+                ManSource.new {
+                    path = manSourcePath
+                    indexed = false
+                }
+            }
         }
-        ManSource.all().forEach { src ->
-            ManSetSources.insert {
-                it[manSet] = set.id
-                it[manSource] = src.id
+
+        if (ManSet.count() == 0L) {
+            logger.debug { "Table ManSet is empty, init it" }
+            val set = ManSet.new {
+                name = nameOfAllManSet
+            }
+            ManSource.all().forEach { src ->
+                ManSetSources.insert {
+                    it[manSet] = set.id
+                    it[manSource] = src.id
+                }
             }
         }
     }
 
+    private fun manSourcePaths(): List<String> {  // todo get from manpath
+        return listOf(
+            "/Users/ligengwang/.opam/4.07.0/man",
+            "/Users/ligengwang/.nvm/versions/node/v13.10.1/share/man",
+            "/Users/ligengwang/anaconda3/share/man",
+            "/usr/local/share/man",
+            "/usr/share/man",
+            "/Library/TeX/texbin/man",
+            "/opt/X11/share/man",
+            "/Library/Apple/usr/share/man",
+            "/Library/Developer/CommandLineTools/usr/share/man",
+        )
+    }
+
     /**
-     * Index one source on [manSourcePath].
+     * Index the given source [manSource]
      */
-    private fun indexOneSource(manSourcePath: Path) {
+    private fun indexOneSource(manSource: ManSource) {
+        logger.debug { "Indexing source: ${manSource.path}" }
+
+        val manSourcePath = Paths.get(manSource.path)
         val fnParseManFileEntry = { (section, manFilePath): Pair<String, Path> ->
             parseManFileEntry(manSourcePath, section, manFilePath)
         }
 
-        val manEntryIndex = ManEntriesIndex(manSourcePath)
+        val manEntryIndex = ManEntriesIndex(manSource)
         enumerateManFiles(manSourcePath)
             .map(fnParseManFileEntry)
             .filterNotNull()
             .forEach { entry ->
                 manEntryIndex.index(entry)
             }
+
+        manSource.indexed = true
     }
 
     /**
@@ -95,11 +128,7 @@ object ManIndex {
             }
     }
 
-    private class ManEntriesIndex(private val manSourcePath: Path) {
-        private val manSource = ManSource.new {
-            path = manSourcePath.toString()
-        }
-
+    private class ManEntriesIndex(private val manSource: ManSource) {
         private val manSectionsCached = ManSection.all()
             .associateBy(ManSection::name).toMutableMap()
 

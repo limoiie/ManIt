@@ -9,6 +9,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 class ManSource(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<ManSource>(ManSources)
     var path by ManSources.path
+    var indexed by ManSources.indexed
     val files by ManFile referrersOn ManFiles.manSource
 
     override fun toString(): String {

@@ -14,7 +14,8 @@ fun parseManFileEntry(
     var result: ManFileEntry? = null
     val manFile = manFilePath.toFile()
     if (manFile.isFile && manFile.canRead()) {
-        manFile.forEachLine { line ->
+        manFile.decompress().forEachLine { line ->
+            // method 1: get man keywords from the section
             if (line.startsWith(".TH") || // header line
                 line.startsWith(".Dt") ||
                 line.startsWith(".HS")
@@ -35,6 +36,8 @@ fun parseManFileEntry(
                 }
                 return@forEachLine
             }
+            // method 2: if this man file link to the other file, get man keywords from
+            // the filename and set the file as the linked path
             if (line.startsWith(MANPAGE_LINK_PREFIX)) { // link line
                 val relativePath =
                     Paths.get(line.substring(MANPAGE_LINK_PREFIX.length).trim())
@@ -47,6 +50,13 @@ fun parseManFileEntry(
                 return@forEachLine
             }
         }
+        // fallback method:
+        result = ManFileEntry(
+            makeKeywords(manFile.nameWithoutExtension, null),
+            makeSections(mainSection, null),
+            manSourcePath,
+            manFilePath
+        )
     }
     return result
 }

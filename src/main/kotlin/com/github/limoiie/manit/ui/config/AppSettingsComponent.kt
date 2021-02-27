@@ -7,9 +7,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.FormBuilder
 import java.awt.BorderLayout
@@ -25,8 +23,6 @@ class AppSettingsComponent(
     private val logger = logger<AppSettingsComponent>()
 
     private var myMainPanel: JPanel? = null
-    private val myUserNameText = JBTextField()
-    private val myIdeaUserStatus = JBCheckBox("Do you use IntelliJ IDEA? ")
 
     private val containerPanel = JPanel(BorderLayout(fragmentHGap, 0))
 
@@ -73,7 +69,6 @@ class AppSettingsComponent(
 
         myMainPanel = FormBuilder.createFormBuilder()
             .addComponentFillVertically(containerPanel, 0)
-            .addComponent(myIdeaUserStatus, 1)
             .panel
     }
 
@@ -82,23 +77,7 @@ class AppSettingsComponent(
     }
 
     fun getPreferredFocusedComponent(): JComponent {
-        return myUserNameText
-    }
-
-    fun getUserNameText(): String {
-        return myUserNameText.text
-    }
-
-    fun setUserNameText(newText: String?) {
-        myUserNameText.text = newText
-    }
-
-    fun getIdeaUserStatus(): Boolean {
-        return myIdeaUserStatus.isSelected
-    }
-
-    fun setIdeaUserStatus(newStatus: Boolean) {
-        myIdeaUserStatus.isSelected = newStatus
+        return manSetTable
     }
 
     private fun createTableView(table: JTable): JPanel {

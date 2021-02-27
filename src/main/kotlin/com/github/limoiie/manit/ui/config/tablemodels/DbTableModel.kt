@@ -1,18 +1,19 @@
 package com.github.limoiie.manit.ui.config.tablemodels
 
 import com.github.limoiie.manit.services.ManDbAppService
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ui.EditableModel
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.dao.Entity
 import javax.swing.table.AbstractTableModel
 
 abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel {
     private val db
         get() = service<ManDbAppService>()
+
+    private val logger = logger<DbTableModel<T>>()
 
     /**
      * The data that will be shown on or edited by view.
@@ -26,35 +27,50 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
 
     protected open val ignoredIndexes: Set<Int> = setOf()
 
+    init {
+        db.whenReady {
+            reloadData(this)
+        }
+    }
+
     protected abstract fun fetchData(manDbService: ManDbAppService.ManDbService): List<T>
 
     protected abstract fun rowViewData(item: T?): MutableList<Any?>
 
-    protected fun loadData() {
-        val rawDataList = runBlocking {
-            val channel = Channel<List<T>>()
-            db.addOnIndexedListener {
-                val data = fetchData(this@addOnIndexedListener)
-                GlobalScope.launch {
-                    channel.send(data)
-                }
-            }
-            channel.receive()
-        }
-
-        data = rawDataList
-            .map { DataWrapper(it, rowViewData(it), ignoredIndexes) }
-            .toMutableList()
-    }
+    protected abstract fun upsert(data: DataWrapper<T>)
 
     fun getData(raw: Int): DataWrapper<T> = data[raw]
 
     open fun isModified(): Boolean {
         return removedData.isNotEmpty() || // deleted
                 data.any {
-                    it.rawData == null || // inserted
-                            it.isModified() // updated
+                    it.isAdded() || it.isUpdated()
                 }
+    }
+
+    protected open fun reloadData(manDbService: ManDbAppService.ManDbService) {
+        manDbService.doFind {
+            data = fetchData(manDbService)
+                .map { DataWrapper(it, rowViewData(it), ignoredIndexes) }
+                .toMutableList()
+            removedData.clear()
+        }
+
+        ApplicationManager.getApplication().invokeLater {
+            fireTableDataChanged()
+        }
+    }
+
+    open fun applyToDb() {
+        removedData.forEach {
+            it.rawData!!.delete()
+        }
+
+        data.forEach {
+            if (it.isAdded() || it.isUpdated()) {
+                upsert(it)
+            }
+        }
     }
 
     // override [TableModel]'s member functions
@@ -99,15 +115,17 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
     override fun canExchangeRows(oldIndex: Int, newIndex: Int): Boolean = true
 
     class DataWrapper<T>(
-        val rawData: T?,
+        var rawData: T?,
         val viewData: MutableList<Any?>,
         private val ignoredIndexes: Set<Int>
     ) {
         private val initViewData = viewData.toList()
 
-        fun isModified() = initViewData.size != viewData.size ||
-            initViewData.zip(viewData)
-            .filterIndexed { i, _ -> i !in ignoredIndexes }
-            .any { (l, r) -> l != r }
+        fun isAdded() = rawData == null
+
+        fun isUpdated() = initViewData.size != viewData.size ||
+                initViewData.zip(viewData)
+                    .filterIndexed { i, _ -> i !in ignoredIndexes }
+                    .any { (l, r) -> l != r }
     }
 }
