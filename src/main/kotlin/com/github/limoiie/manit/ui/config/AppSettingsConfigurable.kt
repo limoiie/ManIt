@@ -48,7 +48,6 @@ class AppSettingsConfigurable : Configurable {
             }
         }
 
-        manSourceTableModel?.switchTo(null)
         service<ManDbAppService>().indexManRepo()
     }
 

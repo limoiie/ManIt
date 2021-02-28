@@ -18,6 +18,7 @@ import com.github.limoiie.manit.services.impls.ManIndex
 import com.github.limoiie.manit.services.impls.ManPageRawLoader
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import io.reactivex.rxjava3.subjects.BehaviorSubject
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -44,7 +45,11 @@ class ManDbAppService {
     private val indexLock = ReentrantReadWriteLock()
 
     private var indexingJob: Job? = null
-    private val onUpdatedListeners: MutableList<ManDbService.() -> Unit> = mutableListOf()
+
+    private val unreadyResult = Result.failure<ManDbService>(NoSuchMethodError())
+
+    val state: BehaviorSubject<Result<ManDbService>> =
+        BehaviorSubject.createDefault(unreadyResult)
 
     init {
         Database.connect(databaseUri, databaseDriver)
@@ -56,57 +61,48 @@ class ManDbAppService {
 
     fun indexManRepo() {
         if (indexLock.isWriteLocked) return
-        indexing.set(true)
-        indexingJob = GlobalScope.launch {
-            logger.debug { "Start indexing ManRepo" }
-            indexLock.writeLock().withLock {
-                logger.debug { "write lock" }
-                transaction {
-                    ManIndex.indexSources()
-                }
-            }
-            logger.debug { "write unlock" }
-            fireUpdated()
-            indexing.set(false)
-        }
-    }
+        if (!indexing.compareAndExchange(false, true)) {
+            indexingJob = GlobalScope.launch {
+                fireUpdated(false)
 
-    fun addOnDbUpdatedListener(listener: ManDbService.() -> Unit) {
-        synchronized(onUpdatedListeners) {
-            onUpdatedListeners.add(listener)
+                logger.debug { "Start indexing ManRepo" }
+                indexLock.writeLock().withLock {
+                    transaction {
+                        ManIndex.indexSources()
+                    }
+                }
+
+                fireUpdated()
+                indexing.set(false)
+            }
         }
     }
 
     fun <R> untilReady(action: ManDbService.() -> R): R = runBlocking {
         while (indexing.get()) delay(200)
-        logger.debug { "try read lock - until" }
         indexLock.readLock().withLock {
-            logger.debug { "read locked - until" }
             service!!.action()
         }
     }
 
     fun whenReady(action: ManDbService.() -> Unit): Job {
         return GlobalScope.launch {
-            logger.debug { "try read lock - when ${Thread.currentThread()}" }
             while (indexing.get()) delay(200)
             indexLock.readLock().withLock {
-                logger.debug { "read locked - when ${Thread.currentThread()}" }
                 if (isActive) {
-                    logger.debug { "before action - when ${Thread.currentThread()}" }
                     service!!.action()
-                    logger.debug { "after action - when ${Thread.currentThread()}" }
                 }
-                logger.debug { "read unlock - when ${Thread.currentThread()}" }
             }
         }
     }
 
-    private fun fireUpdated() {
-        service = ManDbService(this)
-        synchronized(onUpdatedListeners) {
-            for (listener in onUpdatedListeners) {
-                service!!.listener()
+    private fun fireUpdated(finished: Boolean = true) {
+        indexLock.readLock().withLock {
+            if (finished) {
+                service = ManDbService(this)
+                state.onNext(Result.success(service!!))
+            } else {
+                state.onNext(unreadyResult)
             }
         }
     }

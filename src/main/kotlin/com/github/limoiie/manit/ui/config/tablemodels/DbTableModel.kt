@@ -28,8 +28,10 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
     protected open val ignoredIndexes: Set<Int> = setOf()
 
     init {
-        db.whenReady {
-            reloadData(this)
+        db.state.subscribe { result ->
+            result.getOrNull()?.apply {
+                reloadData(this)
+            }
         }
     }
 
