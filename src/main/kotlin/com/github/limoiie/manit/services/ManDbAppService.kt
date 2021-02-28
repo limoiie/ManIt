@@ -18,6 +18,7 @@ import com.github.limoiie.manit.services.impls.ManIndex
 import com.github.limoiie.manit.services.impls.ManPageRawLoader
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.jetbrains.rd.util.Maybe
 import io.reactivex.rxjava3.subjects.BehaviorSubject
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -39,17 +40,15 @@ class ManDbAppService {
     private val databaseUri = "jdbc:sqlite:/Users/ligengwang/Downloads/test.db"
     private val databaseDriver = "org.sqlite.JDBC"
 
-    private var service: ManDbService? = null
+    private var serviceImpl: ManDbService? = null
 
     private val indexing = AtomicBoolean(false)
     private val indexLock = ReentrantReadWriteLock()
 
     private var indexingJob: Job? = null
 
-    private val unreadyResult = Result.failure<ManDbService>(NoSuchMethodError())
-
-    val state: BehaviorSubject<Result<ManDbService>> =
-        BehaviorSubject.createDefault(unreadyResult)
+    val service: BehaviorSubject<Maybe<ManDbService>> =
+        BehaviorSubject.createDefault(Maybe.None)
 
     init {
         Database.connect(databaseUri, databaseDriver)
@@ -81,7 +80,7 @@ class ManDbAppService {
     fun <R> untilReady(action: ManDbService.() -> R): R = runBlocking {
         while (indexing.get()) delay(200)
         indexLock.readLock().withLock {
-            service!!.action()
+            serviceImpl!!.action()
         }
     }
 
@@ -90,7 +89,7 @@ class ManDbAppService {
             while (indexing.get()) delay(200)
             indexLock.readLock().withLock {
                 if (isActive) {
-                    service!!.action()
+                    serviceImpl!!.action()
                 }
             }
         }
@@ -98,13 +97,15 @@ class ManDbAppService {
 
     private fun fireUpdated(finished: Boolean = true) {
         indexLock.readLock().withLock {
+            logger.debug("fire in thread: ${Thread.currentThread()}")
             if (finished) {
-                service = ManDbService(this)
-                state.onNext(Result.success(service!!))
+                serviceImpl = ManDbService(this)
+                service.onNext(Maybe.Just(serviceImpl!!))
             } else {
-                state.onNext(unreadyResult)
+                service.onNext(Maybe.None)
             }
         }
+        logger.debug("finish fire in thread: ${Thread.currentThread()}")
     }
 
     private fun prepareSchema() {
@@ -194,8 +195,8 @@ class ManDbAppService {
             fireDbUpdated()
         }
 
-        fun doFind(statements: () -> Unit) {
-            transaction {
+        fun <R> doFind(statements: () -> R): R {
+            return transaction {
                 statements()
             }
         }

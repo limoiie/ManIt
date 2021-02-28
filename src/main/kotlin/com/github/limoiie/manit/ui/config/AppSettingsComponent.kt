@@ -1,5 +1,7 @@
 package com.github.limoiie.manit.ui.config
 
+import com.github.limoiie.manit.database.dao.ManSet
+import com.github.limoiie.manit.ui.config.tablemodels.DbTableModel.DataWrapper
 import com.github.limoiie.manit.ui.config.tablemodels.ManSetTableModel
 import com.github.limoiie.manit.ui.config.tablemodels.ManSourceTableModel
 import com.intellij.openapi.application.ApplicationManager
@@ -10,6 +12,8 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.rd.util.Maybe
+import io.reactivex.rxjava3.subjects.Subject
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -18,7 +22,8 @@ import javax.swing.event.TableModelEvent
 
 class AppSettingsComponent(
     private val manSetTableModel: ManSetTableModel,
-    private val manSourceTableModel: ManSourceTableModel
+    manSourceTableModel: ManSourceTableModel,
+    private val selectedManSet: Subject<Maybe<DataWrapper<ManSet>>>
 ) {
     private val logger = logger<AppSettingsComponent>()
 
@@ -40,20 +45,20 @@ class AppSettingsComponent(
 
         manSetTable.selectionModel.addListSelectionListener {
             if (it.valueIsAdjusting) return@addListSelectionListener
-            manSourceTableModel.switchTo(
-                if (manSetTable.selectedRow < 0) null else {
-                    manSetTableModel.getData(manSetTable.selectedRow)
-                }
+            val selected = selectedManSet()
+            selectedManSet.onNext(
+                if (selected == null) Maybe.None else Maybe.Just(selected)
             )
         }
         manSourceTableModel.addTableModelListener {
             if (it.type == TableModelEvent.INSERT) {
+                // focus the source path cell after inserting a new row
                 ApplicationManager.getApplication().invokeLater {
                     manSourceTable.editCellAt(it.firstRow, 1)
                 }
             }
         }
-        manSourceTable.setShowColumns(false)
+        manSourceTable.setShowColumns(true)
 
         val leftFrame = createTableView(manSetTable)
         val mainFrame = createTableView(manSourceTable)
@@ -78,6 +83,12 @@ class AppSettingsComponent(
 
     fun getPreferredFocusedComponent(): JComponent {
         return manSetTable
+    }
+
+    private fun selectedManSet(): DataWrapper<ManSet>? {
+        return if (manSetTable.selectedRow < 0) null else {
+            manSetTableModel.getData(manSetTable.selectedRow)
+        }
     }
 
     private fun createTableView(table: JTable): JPanel {

@@ -3,7 +3,6 @@ package com.github.limoiie.manit.ui.config.tablemodels
 import com.github.limoiie.manit.services.ManDbAppService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ui.EditableModel
 import org.jetbrains.exposed.dao.Entity
@@ -28,8 +27,8 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
     protected open val ignoredIndexes: Set<Int> = setOf()
 
     init {
-        db.state.subscribe { result ->
-            result.getOrNull()?.apply {
+        db.service.subscribe { result ->
+            result.asNullable?.apply {
                 reloadData(this)
             }
         }
@@ -43,6 +42,10 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
 
     fun getData(raw: Int): DataWrapper<T> = data[raw]
 
+    fun findData(predictor: (DataWrapper<T>) -> Boolean): DataWrapper<T>? {
+        return data.find(predictor)
+    }
+
     open fun isModified(): Boolean {
         return removedData.isNotEmpty() || // deleted
                 data.any {
@@ -51,13 +54,18 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
     }
 
     protected open fun reloadData(manDbService: ManDbAppService.ManDbService) {
-        manDbService.doFind {
-            data = fetchData(manDbService)
+        val newData = manDbService.doFind {
+            fetchData(manDbService)
                 .map { DataWrapper(it, rowViewData(it), ignoredIndexes) }
                 .toMutableList()
-            removedData.clear()
         }
 
+        data = newData
+        removedData.clear()
+
+        // bug: here is a really strange bug that following action won't be executed
+        // until exiting the preference page, under the case that opening preference page
+        // directly
         ApplicationManager.getApplication().invokeLater {
             fireTableDataChanged()
         }
@@ -73,6 +81,17 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
                 upsert(it)
             }
         }
+    }
+
+    open fun reset() {
+        data = data.union(removedData)
+            .filter { !it.isAdded() }
+            .onEach {
+                it.reset()
+            }.toMutableList()
+
+        removedData.clear()
+        fireTableDataChanged()
     }
 
     // override [TableModel]'s member functions
@@ -129,5 +148,10 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
                 initViewData.zip(viewData)
                     .filterIndexed { i, _ -> i !in ignoredIndexes }
                     .any { (l, r) -> l != r }
+
+        fun reset() {
+            viewData.clear()
+            viewData.addAll(initViewData)
+        }
     }
 }

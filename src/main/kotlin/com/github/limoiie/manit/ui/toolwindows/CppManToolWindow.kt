@@ -48,8 +48,8 @@ class CppManToolWindow(private val project: Project) {
     init {
         initUi()
 
-        service<ManDbAppService>().state.subscribe { result ->
-            result.getOrNull()?.apply {
+        service<ManDbAppService>().service.subscribe { db ->
+            db.asNullable?.apply {
                 ApplicationManager.getApplication().invokeLater {
                     manSetBox.removeAllItems()
                     allManSets.forEach { manSetBox.addItem(it) }
