@@ -3,7 +3,7 @@ package com.github.limoiie.manit.ui.config
 import com.github.limoiie.manit.database.dao.ManSet
 import com.github.limoiie.manit.ui.config.tablemodels.DbTableModel.DataWrapper
 import com.github.limoiie.manit.ui.config.tablemodels.ManSetTableModel
-import com.github.limoiie.manit.ui.config.tablemodels.ManSourceTableModel
+import com.github.limoiie.manit.ui.config.tablemodels.ManSourcePageTableModel
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -22,7 +22,7 @@ import javax.swing.event.TableModelEvent
 
 class AppSettingsComponent(
     private val manSetTableModel: ManSetTableModel,
-    manSourceTableModel: ManSourceTableModel,
+    manSourceTableModel: ManSourcePageTableModel,
     private val selectedManSet: Subject<Maybe<DataWrapper<ManSet>>>
 ) {
     private val logger = logger<AppSettingsComponent>()

@@ -4,7 +4,7 @@ import com.github.limoiie.manit.database.dao.ManSet
 import com.github.limoiie.manit.services.ManDbAppService
 import com.github.limoiie.manit.ui.config.tablemodels.DbTableModel.DataWrapper
 import com.github.limoiie.manit.ui.config.tablemodels.ManSetTableModel
-import com.github.limoiie.manit.ui.config.tablemodels.ManSourceTableModel
+import com.github.limoiie.manit.ui.config.tablemodels.ManSourcePageTableModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.jetbrains.rd.util.Maybe
@@ -15,7 +15,7 @@ import javax.swing.JComponent
 class AppSettingsConfigurable : Configurable {
     private var mySettingsComponent: AppSettingsComponent? = null
     private var manSetTableModel: ManSetTableModel? = null
-    private var manSourceTableModel: ManSourceTableModel? = null
+    private var manSourceTableModel: ManSourcePageTableModel? = null
 
     // A default constructor with no arguments is required because this implementation
     // is registered as an applicationConfigurable EP
@@ -35,7 +35,7 @@ class AppSettingsConfigurable : Configurable {
         val selectedManSet = PublishSubject.create<Maybe<DataWrapper<ManSet>>>()
 
         manSetTableModel = ManSetTableModel()
-        manSourceTableModel = ManSourceTableModel(selectedManSet)
+        manSourceTableModel = ManSourcePageTableModel(selectedManSet)
         mySettingsComponent = AppSettingsComponent(
             manSetTableModel!!, manSourceTableModel!!, selectedManSet
         )
