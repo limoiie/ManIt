@@ -7,6 +7,7 @@ import com.github.limoiie.manit.database.dao.ManSet
 import com.github.limoiie.manit.database.dao.ManSource
 import com.github.limoiie.manit.database.dsl.ManFileSections
 import com.github.limoiie.manit.database.dsl.ManSetSources
+import com.github.limoiie.manit.runCommand
 import com.github.limoiie.manit.services.impls.indexing.ManFileEntry
 import com.github.limoiie.manit.services.impls.indexing.parseManFileEntry
 import com.intellij.openapi.diagnostic.debug
@@ -69,17 +70,10 @@ object ManIndex {
         }
     }
 
-    private fun manSourcePaths(): List<String> {  // todo get from manpath
-        return listOf(
-            "/Users/ligengwang/.opam/4.07.0/man",
-            "/Users/ligengwang/.nvm/versions/node/v13.10.1/share/man",
-            "/Users/ligengwang/anaconda3/share/man",
-            "/usr/local/share/man",
+    private fun manSourcePaths(): List<String> {
+        return "manpath".runCommand()?.split(':') ?: listOf(
             "/usr/share/man",
-            "/Library/TeX/texbin/man",
-            "/opt/X11/share/man",
-            "/Library/Apple/usr/share/man",
-            "/Library/Developer/CommandLineTools/usr/share/man",
+            "/usr/local/share/man"
         )
     }
 
