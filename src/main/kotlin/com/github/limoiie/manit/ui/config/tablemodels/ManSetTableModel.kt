@@ -18,15 +18,10 @@ class ManSetTableModel : DbTableModel<ManSet>() {
         )
     }
 
-    override fun upsert(data: DataWrapper<ManSet>) {
-        val nameValue = data.viewData[0] as String
-        val assign: ManSet.() -> Unit = {
-            name = nameValue
-        }
-        if (data.isAdded()) {
-            data.rawData = ManSet.new(assign)
-        } else {
-            data.rawData!!.apply(assign)
-        }
+    override fun rowDataView(view: MutableList<Any?>): ManSet.() -> Unit = {
+        name = view[0] as String
     }
+
+    override fun new(init: ManSet.() -> Unit) = ManSet.new(init)
+
 }

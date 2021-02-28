@@ -53,9 +53,7 @@ class AppSettingsComponent(
         manSourceTableModel.addTableModelListener {
             if (it.type == TableModelEvent.INSERT) {
                 // focus the source path cell after inserting a new row
-                ApplicationManager.getApplication().invokeLater {
-                    manSourceTable.editCellAt(it.firstRow, 1)
-                }
+                manSourceTable.editCellAt(it.firstRow, 1)
             }
         }
         manSourceTable.setShowColumns(true)

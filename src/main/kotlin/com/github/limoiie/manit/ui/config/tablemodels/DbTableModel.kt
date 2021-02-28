@@ -38,12 +38,22 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
 
     protected abstract fun rowViewData(item: T?): MutableList<Any?>
 
-    protected abstract fun upsert(data: DataWrapper<T>)
+    protected abstract fun rowDataView(view: MutableList<Any?>): T.() -> Unit
+
+    protected abstract fun new(init: T.() -> Unit): T
+
+    private fun upsert(data: DataWrapper<T>) {
+        if (data.isAdded()) {
+            data.rawData = new(rowDataView(data.viewData))
+        } else {
+            data.rawData!!.apply(rowDataView(data.viewData))
+        }
+    }
 
     fun getData(raw: Int): DataWrapper<T> = data[raw]
 
-    fun findData(predictor: (DataWrapper<T>) -> Boolean): DataWrapper<T>? {
-        return data.find(predictor)
+    fun indexData(predictor: (DataWrapper<T>) -> Boolean): Int {
+        return data.indexOfFirst(predictor)
     }
 
     open fun isModified(): Boolean {
