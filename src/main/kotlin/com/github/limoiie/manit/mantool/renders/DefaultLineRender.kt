@@ -5,15 +5,19 @@ import com.github.limoiie.manit.mantool.renders.ManPageTag as T
 import com.github.limoiie.manit.mantool.renders.ManPageParser as P
 
 class DefaultLineRender : LineRender {
+    // parser states
     private val fontStack = Stack<String>()
 
     override fun render(rawLine: String): String {
-        val (macro, line) = spliceMacroLine(rawLine)
-        val renderedLine = renderInlineTag(line)
+        val (macro, line) = splitMacroLine(rawLine)
+        val renderedLine = line
+            .run { renderWhitespaces(this) }
+            .run { renderInlineTag(this) }
         if (macro != null) {
-            return renderMacroLine(macro, renderedLine)
+            val renderedMacroLine = renderMacroLine(macro, renderedLine)
+            return "$renderedMacroLine "
         }
-        return renderedLine
+        return "$renderedLine<br />"
     }
 
     override fun firstRender(): String = String()
@@ -22,7 +26,7 @@ class DefaultLineRender : LineRender {
         return tagInlineFont(false)
     }
 
-    private fun spliceMacroLine(rawLine: String): Pair<String?, String> {
+    private fun splitMacroLine(rawLine: String): Pair<String?, String> {
         // fixme - macro does not always end with blank, for example: .fi\fR
         val parts = rawLine.split(' ', limit = 2)
         val macro = parts.getOrNull(0)
@@ -65,6 +69,12 @@ class DefaultLineRender : LineRender {
                 }
             }
             .joinToString("")
+    }
+
+    private fun renderWhitespaces(line: String): String {
+        return line
+            .replace(" ", "&nbsp;")
+            .replace("<", "&lt;")
     }
 
     private fun renderInlineFontTag(fontTag: String, content: String): String {

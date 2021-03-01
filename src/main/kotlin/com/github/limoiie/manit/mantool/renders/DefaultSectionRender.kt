@@ -4,11 +4,18 @@ class DefaultSectionRender(private val lineRender: LineRender) : SectionRender {
     override fun render(section: String?, lines: List<String>): String {
         val content = lineRender.firstRender() + renderLines(lines.drop(1)) +
                 lineRender.lastRender()
-        return """<div class="section">$section</div>""" + LINE_END +
-                """<div style="margin-left:20px">$content</div>"""
+        return wrapSection(section, content)
     }
 
     private fun renderLines(lines: List<String>): String {
-        return lines.joinToString(LINE_JOINT) { lineRender.render(it) }
+        return lines.joinToString(LINE_END) { lineRender.render(it) }
+    }
+
+    private fun wrapSection(section: String?, content: String): String {
+        val sectionIndent = "margin-left:20px"
+        return """
+            <div class="section">$section</div>
+            <div style="$sectionIndent">$content</div>
+        """.trimIndent()
     }
 }
