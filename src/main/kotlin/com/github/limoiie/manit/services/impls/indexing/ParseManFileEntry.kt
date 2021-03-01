@@ -2,7 +2,6 @@ package com.github.limoiie.manit.services.impls.indexing
 
 import com.github.limoiie.manit.mantool.renders.ManPageParser
 import com.github.limoiie.manit.mantool.renders.isPageHeaderLine
-import com.google.common.io.Files
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -61,6 +60,11 @@ fun parseManFileEntry(
 }
 
 private fun makeKeywords(manFileName: String, nameInTitle: String?): List<String> {
+    // todo for stdman (maybe split the filename is not a good choice)
+    //  - std::something::operator-=,+=
+    //  - std::something::path1,path2 or std::equal_to,less,...
+    //  - std::hash (std::string, std::wstring, std::u16string, ...)
+    //  - std::chrono::duration<Rep,Period>
     val keywordsByFileName = manFileName.split(',')
     val keywordByTitle = nameInTitle?.toLowerCase()
     if (keywordByTitle !in keywordsByFileName && keywordByTitle != null) {
