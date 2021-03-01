@@ -1,4 +1,4 @@
-package com.github.limoiie.manit.services.impls
+package com.github.limoiie.manit.database.helper
 
 import com.github.limoiie.manit.database.dao.ManFile
 import com.github.limoiie.manit.database.dao.ManSection

@@ -52,10 +52,6 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
 
     fun getData(raw: Int): DataWrapper<T> = data[raw]
 
-    fun indexData(predictor: (DataWrapper<T>) -> Boolean): Int {
-        return data.indexOfFirst(predictor)
-    }
-
     open fun isModified(): Boolean {
         return removedData.isNotEmpty() || // deleted
                 data.any {
@@ -145,6 +141,7 @@ abstract class DbTableModel<T : Entity<*>> : AbstractTableModel(), EditableModel
 
     override fun canExchangeRows(oldIndex: Int, newIndex: Int): Boolean = true
 
+    // todo - try to support record the order
     class DataWrapper<T>(
         var rawData: T?,
         val viewData: MutableList<Any?>,

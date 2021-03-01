@@ -1,8 +1,8 @@
 package com.github.limoiie.manit.mantool.renders
 
 import com.intellij.util.containers.Stack
-import com.github.limoiie.manit.mantool.renders.ManPageTag as T
-import com.github.limoiie.manit.mantool.renders.ManPageParser as P
+import com.github.limoiie.manit.mantool.parser.ManPageTag as T
+import com.github.limoiie.manit.mantool.parser.ManPageParser as P
 
 class DefaultLineRender : LineRender {
     // parser states
@@ -11,11 +11,10 @@ class DefaultLineRender : LineRender {
     override fun render(rawLine: String): String {
         val (macro, line) = splitMacroLine(rawLine)
         val renderedLine = line
-            .run { renderWhitespaces(this) }
+            .run { renderEscapeCharacters(this) }
             .run { renderInlineTag(this) }
         if (macro != null) {
-            val renderedMacroLine = renderMacroLine(macro, renderedLine)
-            return "$renderedMacroLine "
+            return renderMacroLine(macro, renderedLine)
         }
         return "$renderedLine<br />"
     }
@@ -36,6 +35,11 @@ class DefaultLineRender : LineRender {
         } else null to rawLine
     }
 
+    /**
+     * todo
+     *  - Support more macros
+     *  - refactor into a more flexible design
+     */
     private fun renderMacroLine(macro: String, line: String): String {
         return when (macro) {
             T.FONT_BOLD -> "<b>$line</b>"
@@ -56,6 +60,12 @@ class DefaultLineRender : LineRender {
         }
     }
 
+    private fun renderEscapeCharacters(line: String): String {
+        return line
+            .replace("  ", "&nbsp; ")
+            .replace("<", "&lt;")
+    }
+
     private fun renderInlineTag(line: String?): String {
         if (line == null || line.isBlank()) return ""
 
@@ -69,12 +79,6 @@ class DefaultLineRender : LineRender {
                 }
             }
             .joinToString("")
-    }
-
-    private fun renderWhitespaces(line: String): String {
-        return line
-            .replace(" ", "&nbsp;")
-            .replace("<", "&lt;")
     }
 
     private fun renderInlineFontTag(fontTag: String, content: String): String {

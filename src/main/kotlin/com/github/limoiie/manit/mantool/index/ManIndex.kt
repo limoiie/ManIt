@@ -1,4 +1,4 @@
-package com.github.limoiie.manit.services.impls
+package com.github.limoiie.manit.mantool.index
 
 import com.github.limoiie.manit.database.dao.ManFile
 import com.github.limoiie.manit.database.dao.ManKeyword
@@ -8,8 +8,6 @@ import com.github.limoiie.manit.database.dao.ManSource
 import com.github.limoiie.manit.database.dsl.ManFileSections
 import com.github.limoiie.manit.database.dsl.ManSetSources
 import com.github.limoiie.manit.runCommand
-import com.github.limoiie.manit.services.impls.indexing.ManFileEntry
-import com.github.limoiie.manit.services.impls.indexing.parseManFileEntry
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.exposed.sql.insert
@@ -87,7 +85,7 @@ object ManIndex {
 
         val manSourcePath = Paths.get(manSource.path)
         val fnParseManFileEntry = { (section, manFilePath): Pair<String, Path> ->
-            parseManFileEntry(manSourcePath, section, manFilePath)
+            parseManFileIndexEntry(manSourcePath, section, manFilePath)
         }
 
         val manEntryIndex = ManEntriesIndex(manSource)
@@ -136,20 +134,20 @@ object ManIndex {
         private val manSectionsCached = ManSection.all()
             .associateBy(ManSection::name).toMutableMap()
 
-        fun index(entry: ManFileEntry) {
+        fun index(indexEntry: ManFileIndexEntry) {
             val manFile = ManFile.new {
-                path = entry.manFile.toString()
+                path = indexEntry.manFile.toString()
                 src = manSource
             }
 
-            val manSection = newManSectionIfNotExist(entry.sections.first())
+            val manSection = newManSectionIfNotExist(indexEntry.sections.first())
 
             ManFileSections.insert {
                 it[this.file] = manFile.id
                 it[this.section] = manSection.id
             }
 
-            for (kw in entry.keywords) {
+            for (kw in indexEntry.keywords) {
                 ManKeyword.new {
                     keyword = kw
                     file = manFile

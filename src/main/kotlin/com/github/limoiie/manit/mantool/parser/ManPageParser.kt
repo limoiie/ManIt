@@ -1,4 +1,4 @@
-package com.github.limoiie.manit.mantool.renders
+package com.github.limoiie.manit.mantool.parser
 
 object ManPageParser {
     /**

@@ -1,6 +1,5 @@
-package com.github.limoiie.manit.services.impls
+package com.github.limoiie.manit.mantool.loader
 
-import com.github.limoiie.manit.services.impls.indexing.decompress
 import java.io.File
 
 object ManPageRawLoader {

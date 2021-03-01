@@ -1,5 +1,9 @@
 package com.github.limoiie.manit.mantool.renders
 
+import com.github.limoiie.manit.mantool.parser.ManPageParser
+import com.github.limoiie.manit.mantool.parser.isCommentLine
+import com.github.limoiie.manit.mantool.parser.isSectionHeaderLine
+
 const val LINE_END = "\n"
 const val LINE_JOINT = " "
 

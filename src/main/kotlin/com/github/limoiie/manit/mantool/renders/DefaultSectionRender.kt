@@ -1,5 +1,11 @@
 package com.github.limoiie.manit.mantool.renders
 
+/**
+ * todo
+ *  - format the title header
+ *  - highlight the code section
+ *  - maintain the indents
+ */
 class DefaultSectionRender(private val lineRender: LineRender) : SectionRender {
     override fun render(section: String?, lines: List<String>): String {
         val content = lineRender.firstRender() + renderLines(lines.drop(1)) +
@@ -8,7 +14,7 @@ class DefaultSectionRender(private val lineRender: LineRender) : SectionRender {
     }
 
     private fun renderLines(lines: List<String>): String {
-        return lines.joinToString(LINE_END) { lineRender.render(it) }
+        return lines.joinToString(LINE_JOINT) { lineRender.render(it) }
     }
 
     private fun wrapSection(section: String?, content: String): String {

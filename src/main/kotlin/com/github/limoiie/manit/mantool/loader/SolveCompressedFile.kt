@@ -1,4 +1,4 @@
-package com.github.limoiie.manit.services.impls.indexing
+package com.github.limoiie.manit.mantool.loader
 
 import com.github.limoiie.manit.services.ManConfigAppService
 import com.intellij.openapi.components.service

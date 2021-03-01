@@ -1,8 +1,8 @@
-package com.github.limoiie.manit.services.impls.indexing
+package com.github.limoiie.manit.mantool.index
 
 import java.nio.file.Path
 
-data class ManFileEntry(
+data class ManFileIndexEntry(
     val keywords: List<String>,
     val sections: List<String>,
     val manSource: Path, // absolute path

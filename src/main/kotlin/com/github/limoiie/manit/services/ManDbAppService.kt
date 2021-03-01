@@ -13,9 +13,9 @@ import com.github.limoiie.manit.database.dsl.ManSources
 import com.github.limoiie.manit.mantool.renders.DefaultLineRender
 import com.github.limoiie.manit.mantool.renders.DefaultManpageRender
 import com.github.limoiie.manit.mantool.renders.DefaultSectionRender
-import com.github.limoiie.manit.services.impls.ManFetch
-import com.github.limoiie.manit.services.impls.ManIndex
-import com.github.limoiie.manit.services.impls.ManPageRawLoader
+import com.github.limoiie.manit.database.helper.ManFetch
+import com.github.limoiie.manit.mantool.index.ManIndex
+import com.github.limoiie.manit.mantool.loader.ManPageRawLoader
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.Maybe

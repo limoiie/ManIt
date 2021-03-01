@@ -1,7 +1,9 @@
-package com.github.limoiie.manit.services.impls.indexing
+package com.github.limoiie.manit.mantool.index
 
-import com.github.limoiie.manit.mantool.renders.ManPageParser
-import com.github.limoiie.manit.mantool.renders.isPageHeaderLine
+import com.github.limoiie.manit.mantool.loader.decompress
+import com.github.limoiie.manit.mantool.loader.nameWithoutCompressExtension
+import com.github.limoiie.manit.mantool.parser.ManPageParser
+import com.github.limoiie.manit.mantool.parser.isPageHeaderLine
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -9,12 +11,12 @@ import java.nio.file.Paths
 private const val MIN_TITLE_PARTS = 3
 private const val MANPAGE_LINK_PREFIX = ".so"
 
-fun parseManFileEntry(
+fun parseManFileIndexEntry(
     manSourcePath: Path,
     mainSection: String,
     manFilePath: Path
-): ManFileEntry? {
-    var result: ManFileEntry? = null
+): ManFileIndexEntry? {
+    var result: ManFileIndexEntry? = null
     val manFile = manFilePath.toFile()
     if (manFile.isFile && manFile.canRead()) {
         val nameWithoutExtension = nameIgnoreSectionSuffix(manFile)
@@ -25,7 +27,7 @@ fun parseManFileEntry(
                     .filterNot(String::isBlank)
                     .toList()
                 if (parts.size >= MIN_TITLE_PARTS) {
-                    result = ManFileEntry(
+                    result = ManFileIndexEntry(
                         makeKeywords(nameWithoutExtension, parts[1]),
                         makeSections(mainSection, parts[2]),
                         manSourcePath,
@@ -39,7 +41,7 @@ fun parseManFileEntry(
             if (line.startsWith(MANPAGE_LINK_PREFIX)) { // link line
                 val relativePath =
                     Paths.get(line.substring(MANPAGE_LINK_PREFIX.length).trim())
-                result = ManFileEntry(
+                result = ManFileIndexEntry(
                     makeKeywords(nameWithoutExtension, null),
                     makeSections(mainSection, null),
                     manSourcePath,
@@ -49,7 +51,7 @@ fun parseManFileEntry(
             }
         }
         // fallback method:
-        result = ManFileEntry(
+        result = ManFileIndexEntry(
             makeKeywords(nameWithoutExtension, null),
             makeSections(mainSection, null),
             manSourcePath,
