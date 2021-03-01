@@ -96,14 +96,14 @@ class ManSourcePageTableModel(
 
     override fun applyToDb() {
         super.applyToDb()
-
+        currManSet = null
         pagesByManSet.values.forEach(PageState::apply)
         pagesByManSet.clear()
     }
 
     override fun reset() {
-        pagesByManSet.clear()
         currManSet = null
+        pagesByManSet.clear()
         super.reset()
     }
 

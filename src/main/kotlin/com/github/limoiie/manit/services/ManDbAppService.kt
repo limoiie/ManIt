@@ -97,7 +97,6 @@ class ManDbAppService {
 
     private fun fireUpdated(finished: Boolean = true) {
         indexLock.readLock().withLock {
-            logger.debug("fire in thread: ${Thread.currentThread()}")
             if (finished) {
                 serviceImpl = ManDbService(this)
                 service.onNext(Maybe.Just(serviceImpl!!))
@@ -105,7 +104,6 @@ class ManDbAppService {
                 service.onNext(Maybe.None)
             }
         }
-        logger.debug("finish fire in thread: ${Thread.currentThread()}")
     }
 
     private fun prepareSchema() {
