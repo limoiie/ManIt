@@ -13,6 +13,7 @@ import com.github.limoiie.manit.services.impls.indexing.parseManFileEntry
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.exposed.sql.insert
+import java.nio.file.FileVisitOption
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -119,12 +120,12 @@ object ManIndex {
             Files.isDirectory(path) &&
                     path.fileName.toString().startsWith(manPrefix)
         }
-        return Files.walk(manSourcePath, 1)
+        return Files.walk(manSourcePath, 1, FileVisitOption.FOLLOW_LINKS)
             .iterator().asSequence().drop(1) // drop itself
             .filter(fnIsManSecDir)
             .flatMap { manSecDirPath -> // mann
                 val section = manSecDirPath.fileName.toString().substring(manPrefix.length)
-                Files.walk(manSecDirPath)
+                Files.walk(manSecDirPath, FileVisitOption.FOLLOW_LINKS)
                     .iterator().asSequence().drop(1) // drop itself
                     .filter { Files.isRegularFile(it) }
                     .map { Pair(section, it) }
