@@ -12,9 +12,9 @@ fun parseManFileEntry(
     manFilePath: Path
 ): ManFileEntry? {
     var result: ManFileEntry? = null
-    val manFile = manFilePath.toFile()
-    if (manFile.isFile && manFile.canRead()) {
-        manFile.decompress().forEachLine { line ->
+    val decompressedManFile = manFilePath.toFile().decompress()
+    if (decompressedManFile.isFile && decompressedManFile.canRead()) {
+        decompressedManFile.forEachLine { line ->
             // method 1: get man keywords from the section
             if (line.startsWith(".TH") || // header line
                 line.startsWith(".Dt") ||
@@ -28,7 +28,7 @@ fun parseManFileEntry(
                     .toList()
                 if (parts.size >= MIN_TITLE_PARTS) {
                     result = ManFileEntry(
-                        makeKeywords(manFile.nameWithoutExtension, parts[1]),
+                        makeKeywords(decompressedManFile.nameWithoutExtension, parts[1]),
                         makeSections(mainSection, parts[2]),
                         manSourcePath,
                         manFilePath
@@ -42,7 +42,7 @@ fun parseManFileEntry(
                 val relativePath =
                     Paths.get(line.substring(MANPAGE_LINK_PREFIX.length).trim())
                 result = ManFileEntry(
-                    makeKeywords(manFile.nameWithoutExtension, null),
+                    makeKeywords(decompressedManFile.nameWithoutExtension, null),
                     makeSections(mainSection, null),
                     manSourcePath,
                     manSourcePath.resolve(relativePath)
@@ -52,7 +52,7 @@ fun parseManFileEntry(
         }
         // fallback method:
         result = ManFileEntry(
-            makeKeywords(manFile.nameWithoutExtension, null),
+            makeKeywords(decompressedManFile.nameWithoutExtension, null),
             makeSections(mainSection, null),
             manSourcePath,
             manFilePath
