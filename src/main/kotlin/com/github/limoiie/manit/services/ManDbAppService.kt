@@ -10,12 +10,13 @@ import com.github.limoiie.manit.database.dsl.ManSections
 import com.github.limoiie.manit.database.dsl.ManSetSources
 import com.github.limoiie.manit.database.dsl.ManSets
 import com.github.limoiie.manit.database.dsl.ManSources
-import com.github.limoiie.manit.mantool.renders.DefaultLineRender
-import com.github.limoiie.manit.mantool.renders.DefaultManpageRender
-import com.github.limoiie.manit.mantool.renders.DefaultSectionRender
 import com.github.limoiie.manit.database.helper.ManFetch
 import com.github.limoiie.manit.mantool.index.ManIndex
 import com.github.limoiie.manit.mantool.loader.ManPageRawLoader
+import com.github.limoiie.manit.mantool.renders.DefaultLineRender
+import com.github.limoiie.manit.mantool.renders.DefaultManpageRender
+import com.github.limoiie.manit.mantool.renders.DefaultSectionRender
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.Maybe
@@ -37,7 +38,7 @@ class ManDbAppService {
     private val logger = logger<ManDbAppService>()
 
     // todo - use roaming folder
-    private val databaseUri = "jdbc:sqlite:/Users/ligengwang/Downloads/test.db"
+    private val databaseUri = "jdbc:sqlite:${PathManager.getOptionsPath()}/ManItIndex.db"
     private val databaseDriver = "org.sqlite.JDBC"
 
     private var serviceImpl: ManDbService? = null
@@ -58,6 +59,7 @@ class ManDbAppService {
         indexManRepo()
     }
 
+    // todo - show the indexing progress
     fun indexManRepo() {
         if (indexLock.isWriteLocked) return
         if (!indexing.compareAndExchange(false, true)) {

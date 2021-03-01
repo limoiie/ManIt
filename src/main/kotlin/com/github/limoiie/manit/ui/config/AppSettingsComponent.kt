@@ -4,7 +4,6 @@ import com.github.limoiie.manit.database.dao.ManSet
 import com.github.limoiie.manit.ui.config.tablemodels.DbTableModel.DataWrapper
 import com.github.limoiie.manit.ui.config.tablemodels.ManSetTableModel
 import com.github.limoiie.manit.ui.config.tablemodels.ManSourcePageTableModel
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.BooleanTableCellRenderer
@@ -20,6 +19,7 @@ import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.event.TableModelEvent
 
+// todo - block the settings while indexing
 class AppSettingsComponent(
     private val manSetTableModel: ManSetTableModel,
     manSourceTableModel: ManSourcePageTableModel,

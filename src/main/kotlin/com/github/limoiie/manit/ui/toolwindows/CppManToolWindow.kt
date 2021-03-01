@@ -37,6 +37,7 @@ class CppManToolWindow(private val project: Project) {
 
     // State fields:
 
+    // todo - support the all-section option
     private val manSet get() = manSetBox.selectedItem as ManSet?
     private val manSection get() = manSectionBox.selectedItem as ManSection?
 

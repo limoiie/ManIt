@@ -3,6 +3,7 @@ package com.github.limoiie.manit.services
 import com.github.limoiie.manit.runCommand
 import java.io.File
 
+// todo try to parse these from /etc/man.conf
 /**
  * A service parsing /etc/man.conf to provide some man utilities
  */
