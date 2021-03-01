@@ -19,6 +19,15 @@ class ManConfigAppService {
         SUFFIX_GZ to listOf("gunzip", "-c")
     )
 
+    fun getCompressSuffix(file: File): String {
+        for (suffix in tools.keys) {
+            if (file.name.endsWith(suffix)) {
+                return ".$suffix"
+            }
+        }
+        return ""
+    }
+
     fun decompress(path: String, extension: String): File? {
         if (extension in tools) {
             val decompressed = (tools[extension]!! + path).runCommand()

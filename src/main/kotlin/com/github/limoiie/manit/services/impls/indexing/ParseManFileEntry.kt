@@ -1,5 +1,9 @@
 package com.github.limoiie.manit.services.impls.indexing
 
+import com.github.limoiie.manit.mantool.renders.ManPageParser
+import com.github.limoiie.manit.mantool.renders.isPageHeaderLine
+import com.google.common.io.Files
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -12,23 +16,18 @@ fun parseManFileEntry(
     manFilePath: Path
 ): ManFileEntry? {
     var result: ManFileEntry? = null
-    val decompressedManFile = manFilePath.toFile().decompress()
-    if (decompressedManFile.isFile && decompressedManFile.canRead()) {
-        decompressedManFile.forEachLine { line ->
+    val manFile = manFilePath.toFile()
+    if (manFile.isFile && manFile.canRead()) {
+        val nameWithoutExtension = nameIgnoreSectionSuffix(manFile)
+        manFile.decompress().forEachLine { line ->
             // method 1: get man keywords from the section
-            if (line.startsWith(".TH") || // header line
-                line.startsWith(".Dt") ||
-                line.startsWith(".HS")
-            ) {
-                // fixme the word or the section may contains blank like:
-                //  - "string at"
-                //  - string\ at
-                val parts = line.split(Regex("\\s"))
+            if (line.isPageHeaderLine()) {
+                val parts = ManPageParser.parseHeaderFields(line)
                     .filterNot(String::isBlank)
                     .toList()
                 if (parts.size >= MIN_TITLE_PARTS) {
                     result = ManFileEntry(
-                        makeKeywords(decompressedManFile.nameWithoutExtension, parts[1]),
+                        makeKeywords(nameWithoutExtension, parts[1]),
                         makeSections(mainSection, parts[2]),
                         manSourcePath,
                         manFilePath
@@ -42,7 +41,7 @@ fun parseManFileEntry(
                 val relativePath =
                     Paths.get(line.substring(MANPAGE_LINK_PREFIX.length).trim())
                 result = ManFileEntry(
-                    makeKeywords(decompressedManFile.nameWithoutExtension, null),
+                    makeKeywords(nameWithoutExtension, null),
                     makeSections(mainSection, null),
                     manSourcePath,
                     manSourcePath.resolve(relativePath)
@@ -52,7 +51,7 @@ fun parseManFileEntry(
         }
         // fallback method:
         result = ManFileEntry(
-            makeKeywords(decompressedManFile.nameWithoutExtension, null),
+            makeKeywords(nameWithoutExtension, null),
             makeSections(mainSection, null),
             manSourcePath,
             manFilePath
@@ -62,12 +61,12 @@ fun parseManFileEntry(
 }
 
 private fun makeKeywords(manFileName: String, nameInTitle: String?): List<String> {
-    val keywordByFileName = manFileName.toLowerCase()
+    val keywordsByFileName = manFileName.split(',')
     val keywordByTitle = nameInTitle?.toLowerCase()
-    if (keywordByFileName != keywordByTitle && keywordByTitle != null) {
-        return listOf(keywordByFileName, keywordByTitle)
+    if (keywordByTitle !in keywordsByFileName && keywordByTitle != null) {
+        return listOf(keywordByTitle) + keywordsByFileName
     }
-    return listOf(keywordByFileName)
+    return keywordsByFileName
 }
 
 private fun makeSections(mainSection: String, sectionInTitle: String?): List<String> {
@@ -75,4 +74,9 @@ private fun makeSections(mainSection: String, sectionInTitle: String?): List<Str
         return listOf(mainSection, sectionInTitle)
     }
     return listOf(mainSection)
+}
+
+private fun nameIgnoreSectionSuffix(file: File): String {
+    val name = file.nameWithoutCompressExtension()
+    return File(name).nameWithoutExtension
 }

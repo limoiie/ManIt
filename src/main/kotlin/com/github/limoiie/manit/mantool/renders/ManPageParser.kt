@@ -40,3 +40,18 @@ object ManPageParser {
         return if (this.isEmpty()) null else this
     }
 }
+
+fun String.isPageHeaderLine(): Boolean {
+    return startsWith(ManPageTag.PAGE_START1, true) ||
+            startsWith(ManPageTag.PAGE_START2, true) ||
+            startsWith(ManPageTag.PAGE_START3, true)
+}
+
+fun String.isSectionHeaderLine(): Boolean {
+    return startsWith(ManPageTag.SECTION_START, true) ||
+            startsWith(ManPageTag.SUB_SECTION_START, true)
+}
+
+fun String.isCommentLine(): Boolean {
+    return startsWith(ManPageTag.COMMENT_START)
+}

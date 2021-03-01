@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.exposed.sql.insert
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -89,14 +90,22 @@ object ManIndex {
         }
 
         val manEntryIndex = ManEntriesIndex(manSource)
-        enumerateManFiles(manSourcePath)
-            .map(fnParseManFileEntry)
-            .filterNotNull()
-            .forEach { entry ->
-                manEntryIndex.index(entry)
-            }
+        try {
+            enumerateManFiles(manSourcePath)
+                .map(fnParseManFileEntry)
+                .filterNotNull()
+                .forEach { entry ->
+                    manEntryIndex.index(entry)
+                }
 
-        manSource.indexed = true
+            logger.debug { "  number of indexed files: ${manSource.files.count()}"}
+
+            manSource.indexed = true
+        } catch (e: NoSuchFileException) {
+            logger.warn("Error when indexing: $e")
+
+            manSource.indexed = false
+        }
     }
 
     /**

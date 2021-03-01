@@ -28,16 +28,5 @@ class DefaultManpageRender(private val sectionRender: SectionRender) {
             .joinToString(LINE_END)
     }
 
-    // string line helpers
-
-    private fun String.isSectionHeaderLine(): Boolean {
-        return startsWith(ManPageTag.SECTION_START) ||
-                startsWith(ManPageTag.SUB_SECTION_START)
-    }
-
-    private fun String.isCommentLine(): Boolean {
-        return startsWith(ManPageTag.COMMENT_START)
-    }
-
     // process states
 }

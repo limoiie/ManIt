@@ -102,10 +102,9 @@ class ManSourcePageTableModel(
     }
 
     override fun reset() {
-        super.reset()
-
         pagesByManSet.clear()
         currManSet = null
+        super.reset()
     }
 
     private class PageState(

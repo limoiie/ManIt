@@ -9,7 +9,8 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="com.github.limoiie.manit.services.MyProjectService"/>
-        <toolWindow id="Cpp Man" secondary="true" icon="AllIcons.General.Modified" anchor="right"
+        <toolWindow id="Man It" secondary="true" icon="AllIcons.General.Modified"
+                    anchor="right"
                     factoryClass="com.github.limoiie.manit.ui.toolwindows.CppManToolWindowFactory" />
         <applicationService serviceImplementation="com.github.limoiie.manit.services.ManDbAppService"/>
         <applicationConfigurable parentId="tools"

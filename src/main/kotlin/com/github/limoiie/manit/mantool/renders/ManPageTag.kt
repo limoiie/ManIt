@@ -1,6 +1,10 @@
 package com.github.limoiie.manit.mantool.renders
 
 object ManPageTag {
+    const val PAGE_START1 = """.TH"""
+    const val PAGE_START2 = """.Dt"""
+    const val PAGE_START3 = """.HS"""
+
     const val SECTION_START = """.SH"""
     const val SUB_SECTION_START = """.SS"""
     const val COMMENT_START = """.\""""
