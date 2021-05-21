@@ -45,7 +45,7 @@ repositories {
     jcenter()
 }
 dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.15.0")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion") {
         exclude("org.slf4j", "slf4j-api")
     }
