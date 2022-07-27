@@ -57,7 +57,7 @@ dependencies {
     }
     implementation("org.xerial:sqlite-jdbc:$sqliteJDBCVersion")
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
